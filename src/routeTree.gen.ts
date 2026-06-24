@@ -9,38 +9,163 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedNovoInventarioRouteImport } from './routes/_authenticated/novo-inventario'
+import { Route as AuthenticatedItensRouteImport } from './routes/_authenticated/itens'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedInventarioIdRouteImport } from './routes/_authenticated/inventario.$id'
+import { Route as AuthenticatedContagemIdRouteImport } from './routes/_authenticated/contagem.$id'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNovoInventarioRoute =
+  AuthenticatedNovoInventarioRouteImport.update({
+    id: '/novo-inventario',
+    path: '/novo-inventario',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedItensRoute = AuthenticatedItensRouteImport.update({
+  id: '/itens',
+  path: '/itens',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInventarioIdRoute =
+  AuthenticatedInventarioIdRouteImport.update({
+    id: '/inventario/$id',
+    path: '/inventario/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContagemIdRoute = AuthenticatedContagemIdRouteImport.update({
+  id: '/contagem/$id',
+  path: '/contagem/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/historico': typeof AuthenticatedHistoricoRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/itens': typeof AuthenticatedItensRoute
+  '/novo-inventario': typeof AuthenticatedNovoInventarioRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/contagem/$id': typeof AuthenticatedContagemIdRoute
+  '/inventario/$id': typeof AuthenticatedInventarioIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/historico': typeof AuthenticatedHistoricoRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/itens': typeof AuthenticatedItensRoute
+  '/novo-inventario': typeof AuthenticatedNovoInventarioRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/contagem/$id': typeof AuthenticatedContagemIdRoute
+  '/inventario/$id': typeof AuthenticatedInventarioIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/itens': typeof AuthenticatedItensRoute
+  '/_authenticated/novo-inventario': typeof AuthenticatedNovoInventarioRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/contagem/$id': typeof AuthenticatedContagemIdRoute
+  '/_authenticated/inventario/$id': typeof AuthenticatedInventarioIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/historico'
+    | '/home'
+    | '/itens'
+    | '/novo-inventario'
+    | '/perfil'
+    | '/contagem/$id'
+    | '/inventario/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/historico'
+    | '/home'
+    | '/itens'
+    | '/novo-inventario'
+    | '/perfil'
+    | '/contagem/$id'
+    | '/inventario/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/historico'
+    | '/_authenticated/home'
+    | '/_authenticated/itens'
+    | '/_authenticated/novo-inventario'
+    | '/_authenticated/perfil'
+    | '/_authenticated/contagem/$id'
+    | '/_authenticated/inventario/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +173,85 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/novo-inventario': {
+      id: '/_authenticated/novo-inventario'
+      path: '/novo-inventario'
+      fullPath: '/novo-inventario'
+      preLoaderRoute: typeof AuthenticatedNovoInventarioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/itens': {
+      id: '/_authenticated/itens'
+      path: '/itens'
+      fullPath: '/itens'
+      preLoaderRoute: typeof AuthenticatedItensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/historico': {
+      id: '/_authenticated/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventario/$id': {
+      id: '/_authenticated/inventario/$id'
+      path: '/inventario/$id'
+      fullPath: '/inventario/$id'
+      preLoaderRoute: typeof AuthenticatedInventarioIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contagem/$id': {
+      id: '/_authenticated/contagem/$id'
+      path: '/contagem/$id'
+      fullPath: '/contagem/$id'
+      preLoaderRoute: typeof AuthenticatedContagemIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedItensRoute: typeof AuthenticatedItensRoute
+  AuthenticatedNovoInventarioRoute: typeof AuthenticatedNovoInventarioRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedContagemIdRoute: typeof AuthenticatedContagemIdRoute
+  AuthenticatedInventarioIdRoute: typeof AuthenticatedInventarioIdRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedItensRoute: AuthenticatedItensRoute,
+  AuthenticatedNovoInventarioRoute: AuthenticatedNovoInventarioRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedContagemIdRoute: AuthenticatedContagemIdRoute,
+  AuthenticatedInventarioIdRoute: AuthenticatedInventarioIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

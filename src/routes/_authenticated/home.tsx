@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, HomeCard } from "@/components/AppShell";
 import { Boxes, ClipboardList, History, PackageSearch, User } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/home")({
   component: Home,
 });
 
