@@ -108,7 +108,7 @@ function ContagemCamera() {
         quantidade_porcas: result.quantidade_porcas,
         quantidade_arruelas: result.quantidade_arruelas,
         total_itens: total,
-        resultado_json: result as unknown as Record<string, unknown>,
+        resultado_json: JSON.parse(JSON.stringify(result)),
         status_confirmacao: true,
         origem: inventario ? "camera_inventario" : "camera_home",
       });
