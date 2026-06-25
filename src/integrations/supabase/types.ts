@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      contagens_camera: {
+        Row: {
+          created_at: string
+          id: string
+          imagem_url: string
+          inventario_id: string | null
+          observacao: string | null
+          origem: string
+          part_number: string | null
+          produto: string | null
+          quantidade_arruelas: number
+          quantidade_parafusos: number
+          quantidade_porcas: number
+          resultado_json: Json | null
+          status_confirmacao: boolean
+          total_itens: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imagem_url: string
+          inventario_id?: string | null
+          observacao?: string | null
+          origem?: string
+          part_number?: string | null
+          produto?: string | null
+          quantidade_arruelas?: number
+          quantidade_parafusos?: number
+          quantidade_porcas?: number
+          resultado_json?: Json | null
+          status_confirmacao?: boolean
+          total_itens?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imagem_url?: string
+          inventario_id?: string | null
+          observacao?: string | null
+          origem?: string
+          part_number?: string | null
+          produto?: string | null
+          quantidade_arruelas?: number
+          quantidade_parafusos?: number
+          quantidade_porcas?: number
+          resultado_json?: Json | null
+          status_confirmacao?: boolean
+          total_itens?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contagens_camera_inventario_id_fkey"
+            columns: ["inventario_id"]
+            isOneToOne: false
+            referencedRelation: "inventarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventario_itens: {
         Row: {
           created_at: string
