@@ -16,7 +16,9 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedNovoInventarioRouteImport } from './routes/_authenticated/novo-inventario'
 import { Route as AuthenticatedItensRouteImport } from './routes/_authenticated/itens'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedHistoricoCameraRouteImport } from './routes/_authenticated/historico-camera'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedContagemCameraRouteImport } from './routes/_authenticated/contagem-camera'
 import { Route as AuthenticatedInventarioIdRouteImport } from './routes/_authenticated/inventario.$id'
 import { Route as AuthenticatedContagemIdRouteImport } from './routes/_authenticated/contagem.$id'
 
@@ -55,11 +57,23 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHistoricoCameraRoute =
+  AuthenticatedHistoricoCameraRouteImport.update({
+    id: '/historico-camera',
+    path: '/historico-camera',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   id: '/historico',
   path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedContagemCameraRoute =
+  AuthenticatedContagemCameraRouteImport.update({
+    id: '/contagem-camera',
+    path: '/contagem-camera',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInventarioIdRoute =
   AuthenticatedInventarioIdRouteImport.update({
     id: '/inventario/$id',
@@ -75,7 +89,9 @@ const AuthenticatedContagemIdRoute = AuthenticatedContagemIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contagem-camera': typeof AuthenticatedContagemCameraRoute
   '/historico': typeof AuthenticatedHistoricoRoute
+  '/historico-camera': typeof AuthenticatedHistoricoCameraRoute
   '/home': typeof AuthenticatedHomeRoute
   '/itens': typeof AuthenticatedItensRoute
   '/novo-inventario': typeof AuthenticatedNovoInventarioRoute
@@ -86,7 +102,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contagem-camera': typeof AuthenticatedContagemCameraRoute
   '/historico': typeof AuthenticatedHistoricoRoute
+  '/historico-camera': typeof AuthenticatedHistoricoCameraRoute
   '/home': typeof AuthenticatedHomeRoute
   '/itens': typeof AuthenticatedItensRoute
   '/novo-inventario': typeof AuthenticatedNovoInventarioRoute
@@ -99,7 +117,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/contagem-camera': typeof AuthenticatedContagemCameraRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
+  '/_authenticated/historico-camera': typeof AuthenticatedHistoricoCameraRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/itens': typeof AuthenticatedItensRoute
   '/_authenticated/novo-inventario': typeof AuthenticatedNovoInventarioRoute
@@ -112,7 +132,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/contagem-camera'
     | '/historico'
+    | '/historico-camera'
     | '/home'
     | '/itens'
     | '/novo-inventario'
@@ -123,7 +145,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/contagem-camera'
     | '/historico'
+    | '/historico-camera'
     | '/home'
     | '/itens'
     | '/novo-inventario'
@@ -135,7 +159,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/contagem-camera'
     | '/_authenticated/historico'
+    | '/_authenticated/historico-camera'
     | '/_authenticated/home'
     | '/_authenticated/itens'
     | '/_authenticated/novo-inventario'
@@ -201,11 +227,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/historico-camera': {
+      id: '/_authenticated/historico-camera'
+      path: '/historico-camera'
+      fullPath: '/historico-camera'
+      preLoaderRoute: typeof AuthenticatedHistoricoCameraRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/historico': {
       id: '/_authenticated/historico'
       path: '/historico'
       fullPath: '/historico'
       preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contagem-camera': {
+      id: '/_authenticated/contagem-camera'
+      path: '/contagem-camera'
+      fullPath: '/contagem-camera'
+      preLoaderRoute: typeof AuthenticatedContagemCameraRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inventario/$id': {
@@ -226,7 +266,9 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedContagemCameraRoute: typeof AuthenticatedContagemCameraRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
+  AuthenticatedHistoricoCameraRoute: typeof AuthenticatedHistoricoCameraRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedItensRoute: typeof AuthenticatedItensRoute
   AuthenticatedNovoInventarioRoute: typeof AuthenticatedNovoInventarioRoute
@@ -236,7 +278,9 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedContagemCameraRoute: AuthenticatedContagemCameraRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
+  AuthenticatedHistoricoCameraRoute: AuthenticatedHistoricoCameraRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedItensRoute: AuthenticatedItensRoute,
   AuthenticatedNovoInventarioRoute: AuthenticatedNovoInventarioRoute,
@@ -256,13 +300,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

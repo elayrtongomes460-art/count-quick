@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, dateBR, dateOnly, num } from "@/lib/format";
-import { Download, Play } from "lucide-react";
+import { Camera, Download, Play } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/inventario/$id")({
   component: Detalhes,
@@ -97,9 +97,14 @@ function Detalhes() {
         </div>
 
         {inv.status === "Em andamento" && (
-          <Link to="/contagem/$id" params={{ id: inv.id }} className="w-full bg-accent text-accent-foreground rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2">
-            <Play className="size-5" /> Continuar contagem
-          </Link>
+          <div className="grid gap-2">
+            <Link to="/contagem/$id" params={{ id: inv.id }} className="w-full bg-accent text-accent-foreground rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2">
+              <Play className="size-5" /> Continuar contagem
+            </Link>
+            <Link to="/contagem-camera" search={{ inventario: inv.id }} className="w-full bg-primary text-primary-foreground rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2">
+              <Camera className="size-5" /> Adicionar contagem por câmera
+            </Link>
+          </div>
         )}
 
         <h3 className="font-semibold mt-4">Itens ({itens.length})</h3>
