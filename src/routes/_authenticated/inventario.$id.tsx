@@ -3,7 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, dateBR, dateOnly, num } from "@/lib/format";
-import { Camera, Download, Play } from "lucide-react";
+import { Camera, Download, FileDown, Play } from "lucide-react";
+import { gerarPdfInventario } from "@/lib/pdf-inventario";
 
 export const Route = createFileRoute("/_authenticated/inventario/$id")({
   component: Detalhes,
