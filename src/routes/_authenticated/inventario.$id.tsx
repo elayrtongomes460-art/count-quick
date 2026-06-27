@@ -3,7 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, dateBR, dateOnly, num } from "@/lib/format";
-import { Camera, Download, Play } from "lucide-react";
+import { Camera, Download, FileDown, Play } from "lucide-react";
+import { gerarPdfInventario } from "@/lib/pdf-inventario";
 
 export const Route = createFileRoute("/_authenticated/inventario/$id")({
   component: Detalhes,
@@ -74,7 +75,10 @@ function Detalhes() {
     <AppShell
       title={inv.nome_inventario}
       action={
-        <button onClick={exportCsv} className="p-2 rounded-md bg-accent text-accent-foreground" aria-label="Exportar"><Download className="size-5" /></button>
+        <div className="flex gap-1.5">
+          <button onClick={() => gerarPdfInventario(inv, itens)} className="p-2 rounded-md bg-primary text-primary-foreground" aria-label="Baixar PDF"><FileDown className="size-5" /></button>
+          <button onClick={exportCsv} className="p-2 rounded-md bg-accent text-accent-foreground" aria-label="Exportar CSV"><Download className="size-5" /></button>
+        </div>
       }
     >
       <div className="space-y-4">
