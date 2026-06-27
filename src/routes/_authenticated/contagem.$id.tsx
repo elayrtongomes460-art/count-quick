@@ -56,16 +56,39 @@ function Contagem() {
     const { data, error } = await supabase.from("itens").select("*").eq("produto", cod.trim()).maybeSingle();
     if (error) return toast.error(error.message);
     if (!data) { setNotFound(true); return; }
-    setItem(data as Item);
-    const existing = contados.find(c => c.produto === data.produto);
-    if (existing) {
-      setQtdContada(String(existing.quantidade_contada));
-      toast.info(`Item já lido. Quantidade atual: ${existing.quantidade_contada}`);
-    } else {
+    const itemData = data as Item;
+    setItem(itemData);
+    const existing = contados.find(c => c.produto === itemData.produto);
+    const novaQtd = existing ? Number(existing.quantidade_contada) + 1 : 1;
+    setQtdContada(String(novaQtd));
+    const diferenca = novaQtd - Number(itemData.quantidade_un);
+    const valor_divergencia = diferenca * Number(itemData.preco_medio_pond);
+    const payload = {
+      inventario_id: inventarioId,
+      item_id: itemData.id,
+      produto: itemData.produto,
+      part_number: itemData.part_number,
+      designacao: itemData.designacao,
+      quantidade_un_sistema: itemData.quantidade_un,
+      unidade_un: itemData.unidade_un,
+      localizacao: itemData.localizacao,
+      preco_medio_pond: itemData.preco_medio_pond,
+      quantidade_contada: novaQtd,
+      diferenca,
+      valor_divergencia,
+    };
+    const { error: upErr } = await supabase.from("inventario_itens").upsert(payload, { onConflict: "inventario_id,produto" });
+    if (upErr) return toast.error(upErr.message);
+    toast.success(`${itemData.produto}: ${novaQtd}`);
+    await loadContados();
+    setTimeout(() => {
+      setProduto("");
+      setItem(null);
       setQtdContada("");
-    }
-    setTimeout(() => qtdRef.current?.focus(), 50);
-  }, [contados]);
+      setNotFound(false);
+      produtoRef.current?.focus();
+    }, 500);
+  }, [contados, inventarioId, loadContados]);
 
   // Debounce/scan detection
   const onProdutoChange = (v: string) => {
