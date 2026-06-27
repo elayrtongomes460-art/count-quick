@@ -3,7 +3,9 @@ import { AppShell } from "@/components/AppShell";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, dateOnly } from "@/lib/format";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, FileDown, Search } from "lucide-react";
+import { gerarPdfInventario } from "@/lib/pdf-inventario";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/historico")({
   component: Historico,
@@ -11,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/historico")({
 
 type Inv = {
   id: string; nome_inventario: string; data: string; responsavel: string;
-  status: string; finalized_at: string | null;
+  observacao: string | null; status: string; finalized_at: string | null;
   inventario_itens: { quantidade_contada: number; valor_divergencia: number }[];
 };
 
@@ -19,12 +21,13 @@ function Historico() {
   const [list, setList] = useState<Inv[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
         .from("inventarios")
-        .select("id,nome_inventario,data,responsavel,status,finalized_at,inventario_itens(quantidade_contada,valor_divergencia)")
+        .select("id,nome_inventario,data,responsavel,observacao,status,finalized_at,inventario_itens(quantidade_contada,valor_divergencia)")
         .order("created_at", { ascending: false });
       if (!error) setList((data ?? []) as Inv[]);
       setLoading(false);
@@ -39,6 +42,21 @@ function Historico() {
     );
   }, [q, list]);
 
+  const baixarPdf = async (inv: Inv, e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    setDownloading(inv.id);
+    try {
+      const { data, error } = await supabase.from("inventario_itens").select("*").eq("inventario_id", inv.id).order("produto");
+      if (error) throw error;
+      gerarPdfInventario(inv, (data ?? []) as never);
+      toast.success("PDF gerado.");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   return (
     <AppShell title="Histórico">
       <div className="relative mb-3">
@@ -51,12 +69,8 @@ function Historico() {
           const total = inv.inventario_itens.length;
           const totalDiv = inv.inventario_itens.reduce((s, x) => s + Number(x.valor_divergencia), 0);
           return (
-            <li key={inv.id}>
-              <Link
-                to="/inventario/$id"
-                params={{ id: inv.id }}
-                className="block bg-card border border-border rounded-xl p-3.5 active:scale-[0.99]"
-              >
+            <li key={inv.id} className="bg-card border border-border rounded-xl active:scale-[0.99]">
+              <Link to="/inventario/$id" params={{ id: inv.id }} className="block p-3.5">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{inv.nome_inventario}</div>
@@ -75,6 +89,14 @@ function Historico() {
                   <ChevronRight className="size-5 text-muted-foreground" />
                 </div>
               </Link>
+              <button
+                onClick={(e) => baixarPdf(inv, e)}
+                disabled={downloading === inv.id}
+                className="w-full border-t border-border py-2.5 text-sm font-semibold flex items-center justify-center gap-2 text-primary disabled:opacity-60"
+              >
+                <FileDown className="size-4" />
+                {downloading === inv.id ? "Gerando PDF…" : "Baixar relatório em PDF"}
+              </button>
             </li>
           );
         })}
@@ -85,3 +107,4 @@ function Historico() {
     </AppShell>
   );
 }
+
