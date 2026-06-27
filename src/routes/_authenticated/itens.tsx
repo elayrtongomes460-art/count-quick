@@ -128,9 +128,12 @@ function ItensPage() {
             <Download className="size-4" /> Exportar CSV
           </button>
           <button onClick={() => fileRef.current?.click()} className="flex-1 py-2.5 rounded-lg border border-border bg-card font-medium text-sm flex items-center justify-center gap-2">
-            <Upload className="size-4" /> Importar CSV
+            <Upload className="size-4" /> Importar
           </button>
-          <input ref={fileRef} type="file" accept=".csv" hidden onChange={e => e.target.files?.[0] && importCsv(e.target.files[0])} />
+          <input ref={fileRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xls,.docx,.pdf" hidden onChange={e => e.target.files?.[0] && importFile(e.target.files[0])} />
+        </div>
+        <div className="text-[11px] text-muted-foreground px-1 -mt-1">
+          Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, quantidade_un, unidade_un, localizacao, preco_medio_pond.
         </div>
 
         <div className="text-xs text-muted-foreground px-1">
