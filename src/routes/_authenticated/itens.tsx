@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { brl, num } from "@/lib/format";
 import { Pencil, Plus, Search, Trash2, X, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { parseItensFile } from "@/lib/import-itens";
 
 export const Route = createFileRoute("/_authenticated/itens")({
   component: ItensPage,
