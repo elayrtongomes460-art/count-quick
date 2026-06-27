@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { brl, num } from "@/lib/format";
 import { Pencil, Plus, Search, Trash2, X, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { parseItensFile } from "@/lib/import-itens";
 
 export const Route = createFileRoute("/_authenticated/itens")({
   component: ItensPage,
@@ -72,34 +73,30 @@ function ItensPage() {
     a.click();
   };
 
-  const importCsv = async (file: File) => {
-    const text = await file.text();
-    const lines = text.replace(/\r/g,"").split("\n").filter(Boolean);
-    if (lines.length < 2) return toast.error("Arquivo vazio.");
-    const sep = lines[0].includes(";") ? ";" : ",";
-    const parse = (l: string) => l.split(sep).map(c => c.replace(/^"|"$/g,"").replace(/""/g,'"').trim());
-    const head = parse(lines[0]).map(h => h.toLowerCase());
-    const req = ["produto","part_number","designacao","quantidade_un","unidade_un","localizacao","preco_medio_pond"];
-    if (!req.every(r => head.includes(r))) return toast.error("Cabeçalhos esperados: " + req.join(", "));
-    const idx = Object.fromEntries(req.map(r => [r, head.indexOf(r)]));
-    let ok = 0, upd = 0, err = 0;
-    for (let i = 1; i < lines.length; i++) {
-      const c = parse(lines[i]);
-      const row = {
-        produto: c[idx.produto],
-        part_number: c[idx.part_number] || "",
-        designacao: c[idx.designacao],
-        quantidade_un: Number(c[idx.quantidade_un].replace(",",".")) || 0,
-        unidade_un: c[idx.unidade_un] || "UN",
-        localizacao: c[idx.localizacao] || "",
-        preco_medio_pond: Number(c[idx.preco_medio_pond].replace(",",".")) || 0,
-      };
-      if (!row.produto || !row.designacao) { err++; continue; }
-      const { error } = await supabase.from("itens").upsert(row, { onConflict: "produto" });
-      if (error) err++; else { if (itens.find(x => x.produto === row.produto)) upd++; else ok++; }
+  const importFile = async (file: File) => {
+    try {
+      toast.loading("Lendo arquivo…", { id: "imp" });
+      const rows = await parseItensFile(file);
+      if (!rows.length) {
+        toast.error("Nenhum item válido encontrado no arquivo.", { id: "imp" });
+        return;
+      }
+      toast.loading(`Importando ${rows.length} item(ns)…`, { id: "imp" });
+      const existentes = new Set(itens.map((x) => x.produto));
+      let ok = 0, upd = 0, err = 0;
+      for (const row of rows) {
+        const { error } = await supabase.from("itens").upsert(row, { onConflict: "produto" });
+        if (error) err++;
+        else if (existentes.has(row.produto)) upd++;
+        else ok++;
+      }
+      toast.success(`Importado: ${ok} novo(s), ${upd} atualizado(s), ${err} erro(s).`, { id: "imp" });
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao importar.", { id: "imp" });
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
     }
-    toast.success(`Importado: ${ok} novo(s), ${upd} atualizado(s), ${err} erro(s).`);
-    load();
   };
 
   return (
@@ -131,9 +128,12 @@ function ItensPage() {
             <Download className="size-4" /> Exportar CSV
           </button>
           <button onClick={() => fileRef.current?.click()} className="flex-1 py-2.5 rounded-lg border border-border bg-card font-medium text-sm flex items-center justify-center gap-2">
-            <Upload className="size-4" /> Importar CSV
+            <Upload className="size-4" /> Importar
           </button>
-          <input ref={fileRef} type="file" accept=".csv" hidden onChange={e => e.target.files?.[0] && importCsv(e.target.files[0])} />
+          <input ref={fileRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xls,.docx,.pdf" hidden onChange={e => e.target.files?.[0] && importFile(e.target.files[0])} />
+        </div>
+        <div className="text-[11px] text-muted-foreground px-1 -mt-1">
+          Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, quantidade_un, unidade_un, localizacao, preco_medio_pond.
         </div>
 
         <div className="text-xs text-muted-foreground px-1">
