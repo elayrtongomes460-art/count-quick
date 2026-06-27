@@ -58,7 +58,13 @@ function Contagem() {
     if (!data) { setNotFound(true); return; }
     const itemData = data as Item;
     setItem(itemData);
-    const existing = contados.find(c => c.produto === itemData.produto);
+    // busca a quantidade atual DIRETO no banco para evitar estado defasado entre bipadas rápidas
+    const { data: existing } = await supabase
+      .from("inventario_itens")
+      .select("quantidade_contada")
+      .eq("inventario_id", inventarioId)
+      .eq("produto", itemData.produto)
+      .maybeSingle();
     const novaQtd = existing ? Number(existing.quantidade_contada) + 1 : 1;
     setQtdContada(String(novaQtd));
     const diferenca = novaQtd - Number(itemData.quantidade_un);
@@ -88,7 +94,7 @@ function Contagem() {
       setNotFound(false);
       produtoRef.current?.focus();
     }, 500);
-  }, [contados, inventarioId, loadContados]);
+  }, [inventarioId, loadContados]);
 
   // Debounce/scan detection
   const onProdutoChange = (v: string) => {
