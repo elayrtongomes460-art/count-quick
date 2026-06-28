@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { analisarImagemContagem } from "@/lib/contagem-camera.functions";
 import { Camera, Image as ImageIcon, Loader2, RotateCcw, Save, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { LiveCount } from "@/components/LiveCount";
 
 type Search = { inventario?: string };
 
