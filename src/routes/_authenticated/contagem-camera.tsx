@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { analisarImagemContagem } from "@/lib/contagem-camera.functions";
 import { Camera, Image as ImageIcon, Loader2, RotateCcw, Save, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { LiveCount } from "@/components/LiveCount";
 
 type Search = { inventario?: string };
 
@@ -138,20 +139,34 @@ function ContagemCamera() {
         </div>
 
         {!preview ? (
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => camRef.current?.click()}
-              className="bg-primary text-primary-foreground rounded-xl py-4 font-semibold flex flex-col items-center justify-center gap-1 min-h-[100px]"
-            >
-              <Camera className="size-7" /> Tirar Foto
-            </button>
-            <button
-              onClick={() => galRef.current?.click()}
-              className="bg-card border border-border rounded-xl py-4 font-semibold flex flex-col items-center justify-center gap-1 min-h-[100px]"
-            >
-              <ImageIcon className="size-7" /> Galeria
-            </button>
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => camRef.current?.click()}
+                className="bg-primary text-primary-foreground rounded-xl py-4 font-semibold flex flex-col items-center justify-center gap-1 min-h-[100px]"
+              >
+                <Camera className="size-7" /> Tirar Foto
+              </button>
+              <button
+                onClick={() => galRef.current?.click()}
+                className="bg-card border border-border rounded-xl py-4 font-semibold flex flex-col items-center justify-center gap-1 min-h-[100px]"
+              >
+                <ImageIcon className="size-7" /> Galeria
+              </button>
+            </div>
+            <LiveCount
+              onFinish={(c) =>
+                setResult({
+                  quantidade_parafusos: c.parafuso,
+                  quantidade_porcas: c.porca,
+                  quantidade_arruelas: c.arruela,
+                  total_itens: c.parafuso + c.porca + c.arruela,
+                  confianca: null,
+                  detalhes: "Contagem ao vivo (IA em tempo real)",
+                })
+              }
+            />
+          </>
         ) : (
           <div className="space-y-2">
             <div className="relative rounded-xl overflow-hidden border border-border bg-black/5">
