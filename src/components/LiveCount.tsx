@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Play, Square, Video } from "lucide-react";
+import { Camera, Loader2, Play, Square, Video } from "lucide-react";
 import { toast } from "sonner";
 import {
   type Categoria,
@@ -12,6 +12,17 @@ import {
 type Counts = Record<Categoria, number>;
 
 const ZERO: Counts = { parafuso: 0, porca: 0, arruela: 0, outro: 0 };
+const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
+  video: {
+    facingMode: { ideal: "environment" },
+  },
+  audio: false,
+};
+
+type CameraErrorState = {
+  title: string;
+  description?: string;
+};
 
 export function LiveCount({
   onFinish,
@@ -25,7 +36,10 @@ export function LiveCount({
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
+  const startingRef = useRef(false);
+  const mountedRef = useRef(false);
   const noDetectFramesRef = useRef(0);
+  const deniedAttemptsRef = useRef(0);
 
   const [alvo, setAlvo] = useState<Categoria>("parafuso");
   const alvoRef = useRef<Categoria>("parafuso");
@@ -36,50 +50,147 @@ export function LiveCount({
   const [counts, setCounts] = useState<Counts>(ZERO);
   const [avgScore, setAvgScore] = useState(0);
   const [hint, setHint] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<CameraErrorState | null>(null);
 
-  useEffect(() => () => stop(), []);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      stopCameraResources();
+    };
+  }, []);
 
   async function start() {
+    if (startingRef.current || runningRef.current) return;
+
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+      const message = "Este dispositivo não suporta captura de vídeo.";
+      setCameraError({ title: message });
+      toast.error(message);
+      return;
+    }
+
+    let openedStream: MediaStream | null = null;
     try {
+      startingRef.current = true;
       setLoading(true);
       setHint(null);
+      setCameraError(null);
+      stopCameraResources();
       trackerRef.current.reset();
       setCounts(ZERO);
+
+      const stream = await navigator.mediaDevices.getUserMedia(CAMERA_CONSTRAINTS);
+      openedStream = stream;
+      deniedAttemptsRef.current = 0;
+
+      if (!mountedRef.current) {
+        stopStream(stream);
+        return;
+      }
+
+      streamRef.current = stream;
+      const video = videoRef.current;
+      if (!video) throw new Error("Elemento de vídeo indisponível");
+      video.srcObject = stream;
+      await video.play();
+
+      if (!mountedRef.current) {
+        stopCameraResources();
+        return;
+      }
 
       if (!detectorRef.current) detectorRef.current = createDefaultDetector();
       await detectorRef.current.load();
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      const video = videoRef.current!;
-      video.srcObject = stream;
-      await video.play();
+      if (!mountedRef.current) {
+        stopCameraResources();
+        return;
+      }
 
       runningRef.current = true;
       setRunning(true);
       noDetectFramesRef.current = 0;
       loop();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível abrir a câmera");
-      stop();
+    } catch (err) {
+      if (openedStream && streamRef.current !== openedStream) stopStream(openedStream);
+      handleCameraError(err);
+      stopCameraResources();
     } finally {
-      setLoading(false);
+      startingRef.current = false;
+      if (mountedRef.current) setLoading(false);
     }
   }
 
-  function stop() {
+  function stopStream(stream: MediaStream) {
+    stream.getTracks().forEach((track) => track.stop());
+  }
+
+  function stopCameraResources() {
     runningRef.current = false;
-    setRunning(false);
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      stopStream(streamRef.current);
       streamRef.current = null;
     }
     if (videoRef.current) videoRef.current.srcObject = null;
+  }
+
+  function stop() {
+    stopCameraResources();
+    if (mountedRef.current) setRunning(false);
+  }
+
+  function handleCameraError(err: unknown) {
+    console.error(err);
+
+    const name = err instanceof Error ? err.name : "UnknownError";
+    let errorState: CameraErrorState;
+
+    switch (name) {
+      case "NotAllowedError":
+      case "PermissionDeniedError": {
+        deniedAttemptsRef.current += 1;
+        errorState = {
+          title: "Permissão da câmera negada.",
+          description:
+            deniedAttemptsRef.current > 1
+              ? "Acesse as configurações do aplicativo e habilite a permissão da câmera."
+              : undefined,
+        };
+        break;
+      }
+
+      case "NotFoundError":
+      case "DevicesNotFoundError":
+        errorState = { title: "Nenhuma câmera foi encontrada neste dispositivo." };
+        break;
+
+      case "NotReadableError":
+      case "TrackStartError":
+        errorState = { title: "A câmera está em uso por outro aplicativo." };
+        break;
+
+      case "OverconstrainedError":
+      case "ConstraintNotSatisfiedError":
+        errorState = { title: "A configuração da câmera é incompatível com este dispositivo." };
+        break;
+
+      case "SecurityError":
+        errorState = { title: "A câmera só pode ser usada em conexão segura HTTPS ou aplicativo compatível." };
+        break;
+
+      default:
+        errorState = { title: "Não foi possível abrir a câmera." };
+        break;
+    }
+
+    if (mountedRef.current) {
+      setRunning(false);
+      setCameraError(errorState);
+      toast.error(errorState.description ?? errorState.title);
+    }
   }
 
   async function loop() {
@@ -117,8 +228,8 @@ export function LiveCount({
       else noDetectFramesRef.current = 0;
       if (noDetectFramesRef.current === 60) {
         setHint("Iluminação fraca ou câmera distante. Aproxime e melhore a luz.");
-      } else if (filtered.length > 0 && hint) {
-        setHint(null);
+      } else if (filtered.length > 0) {
+        setHint((current) => (current ? null : current));
       }
 
       const avg = filtered.length
@@ -147,7 +258,7 @@ export function LiveCount({
     } catch {
       // ignora frame com erro
     }
-    rafRef.current = requestAnimationFrame(loop);
+    if (runningRef.current) rafRef.current = requestAnimationFrame(loop);
   }
 
   function finalizar() {
@@ -199,9 +310,25 @@ export function LiveCount({
       <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
         <video ref={videoRef} playsInline muted className="w-full h-full object-contain" />
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
-        {!running && !loading && (
+        {cameraError && !running && !loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 px-4 text-center text-white">
+            <Camera className="size-9" />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">{cameraError.title}</p>
+              {cameraError.description && <p className="text-xs text-white/80">{cameraError.description}</p>}
+            </div>
+            <button
+              onClick={start}
+              disabled={loading}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+        {!cameraError && !running && !loading && (
           <div className="absolute inset-0 flex items-center justify-center text-white/80 text-sm">
-            Toque em Iniciar Contagem
+            Toque em Abrir Câmera
           </div>
         )}
         {loading && (
@@ -227,15 +354,15 @@ export function LiveCount({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {!running ? (
+        {!running && !cameraError ? (
           <button
             onClick={start}
             disabled={loading}
             className="col-span-2 bg-primary text-primary-foreground rounded-xl py-3 font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            <Play className="size-5" /> Iniciar Contagem
+            <Play className="size-5" /> Abrir Câmera
           </button>
-        ) : (
+        ) : running ? (
           <>
             <button
               onClick={() => { trackerRef.current.reset(); setCounts(ZERO); toast.info("Contagem reiniciada"); }}
@@ -250,7 +377,7 @@ export function LiveCount({
               <Square className="size-5" /> Concluir
             </button>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );
