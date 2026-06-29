@@ -18,6 +18,7 @@ import { Route as AuthenticatedItensRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedHistoricoCameraRouteImport } from './routes/_authenticated/historico-camera'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedContagemIaRouteImport } from './routes/_authenticated/contagem-ia'
 import { Route as AuthenticatedContagemCameraRouteImport } from './routes/_authenticated/contagem-camera'
 import { Route as AuthenticatedInventarioIdRouteImport } from './routes/_authenticated/inventario.$id'
 import { Route as AuthenticatedContagemIdRouteImport } from './routes/_authenticated/contagem.$id'
@@ -68,6 +69,11 @@ const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedContagemIaRoute = AuthenticatedContagemIaRouteImport.update({
+  id: '/contagem-ia',
+  path: '/contagem-ia',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedContagemCameraRoute =
   AuthenticatedContagemCameraRouteImport.update({
     id: '/contagem-camera',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/contagem-camera': typeof AuthenticatedContagemCameraRoute
+  '/contagem-ia': typeof AuthenticatedContagemIaRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/historico-camera': typeof AuthenticatedHistoricoCameraRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/contagem-camera': typeof AuthenticatedContagemCameraRoute
+  '/contagem-ia': typeof AuthenticatedContagemIaRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/historico-camera': typeof AuthenticatedHistoricoCameraRoute
   '/home': typeof AuthenticatedHomeRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/contagem-camera': typeof AuthenticatedContagemCameraRoute
+  '/_authenticated/contagem-ia': typeof AuthenticatedContagemIaRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/historico-camera': typeof AuthenticatedHistoricoCameraRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/contagem-camera'
+    | '/contagem-ia'
     | '/historico'
     | '/historico-camera'
     | '/home'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/contagem-camera'
+    | '/contagem-ia'
     | '/historico'
     | '/historico-camera'
     | '/home'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/contagem-camera'
+    | '/_authenticated/contagem-ia'
     | '/_authenticated/historico'
     | '/_authenticated/historico-camera'
     | '/_authenticated/home'
@@ -241,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contagem-ia': {
+      id: '/_authenticated/contagem-ia'
+      path: '/contagem-ia'
+      fullPath: '/contagem-ia'
+      preLoaderRoute: typeof AuthenticatedContagemIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contagem-camera': {
       id: '/_authenticated/contagem-camera'
       path: '/contagem-camera'
@@ -267,6 +286,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedContagemCameraRoute: typeof AuthenticatedContagemCameraRoute
+  AuthenticatedContagemIaRoute: typeof AuthenticatedContagemIaRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHistoricoCameraRoute: typeof AuthenticatedHistoricoCameraRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
@@ -279,6 +299,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContagemCameraRoute: AuthenticatedContagemCameraRoute,
+  AuthenticatedContagemIaRoute: AuthenticatedContagemIaRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHistoricoCameraRoute: AuthenticatedHistoricoCameraRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
