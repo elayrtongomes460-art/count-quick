@@ -209,7 +209,7 @@ function ContagemIA() {
         status_confirmacao: true,
         origem: inventario ? "ia_inventario" : "ia_home",
       });
-      if (error) throw error;
+      if (error) throw new Error(`Salvar: ${error.message}`);
       toast.success("Contagem salva com sucesso.");
       navigate({
         to: inventario ? "/inventario/$id" : "/historico-camera",
