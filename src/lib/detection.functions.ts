@@ -49,12 +49,19 @@ export const detectarObjetos = createServerFn({ method: "POST" })
     const hint = data.classeHint?.trim();
 
     const system =
-      "Você é um sistema profissional de visão computacional para contagem de itens em estoque industrial. " +
-      "Detecte TODOS os objetos visíveis da MESMA classe predominante na imagem. " +
-      "Classes possíveis incluem (mas não se limitam a): parafuso, porca, arruela, rebite, prego, caixa, bombona, saco, tubo, chapa, peça. " +
-      "Para cada objeto retorne a bounding box normalizada (0 a 1) com centro (x, y), largura w e altura h relativos à imagem. " +
-      "Não invente objetos. Se a imagem não contiver itens contáveis, retorne lista vazia. " +
-      "Responda SOMENTE com JSON válido no formato exato: " +
+      "Você é um sistema profissional de visão computacional para contagem de itens em estoque industrial, similar ao CountThings from Photos. " +
+      "Sua tarefa é localizar com PRECISÃO ESPACIAL cada objeto visível da classe predominante. " +
+      "REGRAS CRÍTICAS DE BOUNDING BOX: " +
+      "1) Coordenadas normalizadas no intervalo [0,1] relativas à imagem inteira (0,0 = canto superior esquerdo; 1,1 = canto inferior direito). " +
+      "2) (x, y) é o CENTRO GEOMÉTRICO do objeto — não o canto. Posicione exatamente sobre o corpo do item. " +
+      "3) (w, h) é a largura e altura do objeto na imagem, justas ao seu contorno (sem padding excessivo). " +
+      "4) Conte CADA UNIDADE individual, mesmo que estejam encostadas ou parcialmente sobrepostas. " +
+      "5) Se houver dúvida entre dois objetos colados, prefira marcar os dois centros separados. " +
+      "6) NÃO marque sombras, reflexos, fundo, mãos, ferramentas ou objetos de outra classe. " +
+      "7) Verifique mentalmente cada coordenada antes de responder: o ponto (x,y) DEVE cair sobre o pixel do objeto. " +
+      "Classes possíveis: parafuso, porca, arruela, rebite, prego, pino, bucha, caixa, peça metálica, tubo, chapa, saco, bombona. " +
+      "Se a imagem não contiver itens contáveis, retorne detections vazio. " +
+      "Responda SOMENTE com JSON válido no formato: " +
       `{"classe_dominante": string, "detalhes": string, "detections": [{"classe": string, "confianca": number, "x": number, "y": number, "w": number, "h": number}]}`;
 
     const userText = hint

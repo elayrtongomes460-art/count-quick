@@ -131,16 +131,24 @@ function ContagemIA() {
     setAnalyzing(true);
     const t0 = performance.now();
     try {
+      // Downscale to max 1280px on the longest side for better model precision and faster upload
+      const srcW = video.videoWidth, srcH = video.videoHeight;
+      const MAX = 1280;
+      const scale = Math.min(1, MAX / Math.max(srcW, srcH));
+      const dstW = Math.round(srcW * scale);
+      const dstH = Math.round(srcH * scale);
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = dstW;
+      canvas.height = dstH;
       const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(video, 0, 0);
-      const blob: Blob = await new Promise((r) => canvas.toBlob((b) => r(b!), "image/jpeg", 0.85)!);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(video, 0, 0, dstW, dstH);
+      const blob: Blob = await new Promise((r) => canvas.toBlob((b) => r(b!), "image/jpeg", 0.92)!);
       const base64 = await blobToBase64(blob);
       const result = await detect({ data: { imageBase64: base64, mimeType: "image/jpeg", classeHint: produto || undefined } });
       const url = URL.createObjectURL(blob);
-      setSnapshot({ blob, url, w: canvas.width, h: canvas.height });
+      setSnapshot({ blob, url, w: dstW, h: dstH });
       setDetections(result.detections);
       setClasse(result.classeDominante);
       setConfianca(result.confianca_media);
@@ -173,8 +181,9 @@ function ContagemIA() {
       const up = await supabase.storage.from("contagens-camera").upload(path, snapshot.blob, {
         contentType: "image/jpeg", upsert: false,
       });
-      if (up.error) throw up.error;
-      const { data: signed } = await supabase.storage.from("contagens-camera").createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (up.error) throw new Error(`Upload: ${up.error.message}`);
+      const { data: signed, error: signErr } = await supabase.storage.from("contagens-camera").createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signErr) throw new Error(`URL: ${signErr.message}`);
       const imagem_url = signed?.signedUrl ?? path;
 
       const total = detections.length;
@@ -200,7 +209,7 @@ function ContagemIA() {
         status_confirmacao: true,
         origem: inventario ? "ia_inventario" : "ia_home",
       });
-      if (error) throw error;
+      if (error) throw new Error(`Salvar: ${error.message}`);
       toast.success("Contagem salva com sucesso.");
       navigate({
         to: inventario ? "/inventario/$id" : "/historico-camera",
@@ -403,12 +412,15 @@ function ContagemIA() {
 }
 
 function Marker({ index, d, onRemove }: { index: number; d: Detection; onRemove: (e: React.MouseEvent) => void }) {
-  const size = Math.max(24, Math.min(56, Math.max(d.w, d.h) * 380));
+  // Tamanho do círculo proporcional à bbox, com mínimo legível e máximo controlado
+  // para que a "bolinha" fique sobre o objeto sem cobrir vizinhos.
+  const bboxPx = Math.max(d.w, d.h) * 280;
+  const size = Math.max(20, Math.min(44, bboxPx * 0.55));
   return (
     <button
       onClick={onRemove}
-      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/90 text-accent-foreground font-bold border-2 border-white shadow-lg flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
-      style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%`, width: size, height: size, fontSize: Math.max(10, size * 0.4) }}
+      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent text-accent-foreground font-bold border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors ring-1 ring-black/30"
+      style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%`, width: size, height: size, fontSize: Math.max(10, size * 0.42) }}
       title={`${d.classe} · ${Math.round(d.confianca * 100)}%`}
     >
       {index}
