@@ -181,8 +181,9 @@ function ContagemIA() {
       const up = await supabase.storage.from("contagens-camera").upload(path, snapshot.blob, {
         contentType: "image/jpeg", upsert: false,
       });
-      if (up.error) throw up.error;
-      const { data: signed } = await supabase.storage.from("contagens-camera").createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (up.error) throw new Error(`Upload: ${up.error.message}`);
+      const { data: signed, error: signErr } = await supabase.storage.from("contagens-camera").createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signErr) throw new Error(`URL: ${signErr.message}`);
       const imagem_url = signed?.signedUrl ?? path;
 
       const total = detections.length;
