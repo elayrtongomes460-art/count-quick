@@ -41,13 +41,6 @@ function Home() {
             tone="accent"
           />
           <HomeCard
-            to="/contagem-camera"
-            icon={Camera}
-            label="Contagem por Foto"
-            desc="Tirar foto e contar parafusos, porcas, arruelas"
-            tone="muted"
-          />
-          <HomeCard
             to="/itens"
             icon={PackageSearch}
             label="Cadastro de Itens"
