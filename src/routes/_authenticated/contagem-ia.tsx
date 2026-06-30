@@ -131,16 +131,24 @@ function ContagemIA() {
     setAnalyzing(true);
     const t0 = performance.now();
     try {
+      // Downscale to max 1280px on the longest side for better model precision and faster upload
+      const srcW = video.videoWidth, srcH = video.videoHeight;
+      const MAX = 1280;
+      const scale = Math.min(1, MAX / Math.max(srcW, srcH));
+      const dstW = Math.round(srcW * scale);
+      const dstH = Math.round(srcH * scale);
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = dstW;
+      canvas.height = dstH;
       const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(video, 0, 0);
-      const blob: Blob = await new Promise((r) => canvas.toBlob((b) => r(b!), "image/jpeg", 0.85)!);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(video, 0, 0, dstW, dstH);
+      const blob: Blob = await new Promise((r) => canvas.toBlob((b) => r(b!), "image/jpeg", 0.92)!);
       const base64 = await blobToBase64(blob);
       const result = await detect({ data: { imageBase64: base64, mimeType: "image/jpeg", classeHint: produto || undefined } });
       const url = URL.createObjectURL(blob);
-      setSnapshot({ blob, url, w: canvas.width, h: canvas.height });
+      setSnapshot({ blob, url, w: dstW, h: dstH });
       setDetections(result.detections);
       setClasse(result.classeDominante);
       setConfianca(result.confianca_media);
