@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppShell, HomeCard } from "@/components/AppShell";
+import { HomeCard } from "@/components/AppShell";
 import { Boxes, Camera, ClipboardList, History, PackageSearch, Scan, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/home")({
