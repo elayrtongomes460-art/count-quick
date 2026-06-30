@@ -412,12 +412,15 @@ function ContagemIA() {
 }
 
 function Marker({ index, d, onRemove }: { index: number; d: Detection; onRemove: (e: React.MouseEvent) => void }) {
-  const size = Math.max(24, Math.min(56, Math.max(d.w, d.h) * 380));
+  // Tamanho do círculo proporcional à bbox, com mínimo legível e máximo controlado
+  // para que a "bolinha" fique sobre o objeto sem cobrir vizinhos.
+  const bboxPx = Math.max(d.w, d.h) * 280;
+  const size = Math.max(20, Math.min(44, bboxPx * 0.55));
   return (
     <button
       onClick={onRemove}
-      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/90 text-accent-foreground font-bold border-2 border-white shadow-lg flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
-      style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%`, width: size, height: size, fontSize: Math.max(10, size * 0.4) }}
+      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent text-accent-foreground font-bold border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors ring-1 ring-black/30"
+      style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%`, width: size, height: size, fontSize: Math.max(10, size * 0.42) }}
       title={`${d.classe} · ${Math.round(d.confianca * 100)}%`}
     >
       {index}
