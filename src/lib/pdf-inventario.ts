@@ -203,13 +203,20 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   const nowStr = dateBR(nowIso);
   const [nowData, nowHora] = nowStr.split(" ");
 
-  // Tempo estimado (finalized - created; usamos data como referência se necessário)
+  // Tempo real de inventário (created_at → finalized_at)
   let tempoMin = 0;
-  if (inv.finalized_at) {
-    const start = new Date(inv.data).getTime();
+  const startIso = inv.created_at || inv.data;
+  if (inv.finalized_at && startIso) {
+    const start = new Date(startIso).getTime();
     const end = new Date(inv.finalized_at).getTime();
     tempoMin = Math.max(0, Math.round((end - start) / 60000));
   }
+  const tempoLabel = tempoMin < 1
+    ? "menos de 1 min"
+    : tempoMin < 60
+      ? `${tempoMin} min`
+      : `${Math.floor(tempoMin / 60)}h ${tempoMin % 60}min`;
+
 
   // ============================================================
   // CABEÇALHO
