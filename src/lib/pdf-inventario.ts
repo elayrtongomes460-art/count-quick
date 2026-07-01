@@ -171,8 +171,8 @@ function iconEdit(doc: jsPDF, x: number, y: number, s: number, color: [number, n
 // =====================================================================
 export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[]) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const PW = 210, PH = 297;
-  const M = 8;
+  const PW = 297, PH = 210;
+  const M = 10;
 
   const logoData = await loadLogo();
 
