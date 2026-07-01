@@ -316,7 +316,7 @@ function Contagem() {
 
       <SignaturePad
         open={showSig}
-        title="Assinatura do responsável"
+        steps={["Assinatura do responsável pelo inventário", "Assinatura do supervisor / conferente"]}
         onCancel={() => setShowSig(false)}
         onConfirm={confirmarFinalizacao}
       />
