@@ -99,6 +99,20 @@ function ItensPage() {
     }
   };
 
+  const limparTudo = async () => {
+    if (!itens.length) return toast.info("Nenhum item para limpar.");
+    const c1 = confirm(`Isso vai EXCLUIR todos os ${itens.length} itens cadastrados. Deseja continuar?`);
+    if (!c1) return;
+    const c2 = prompt('Para confirmar, digite LIMPAR');
+    if ((c2 ?? "").trim().toUpperCase() !== "LIMPAR") return toast.info("Ação cancelada.");
+    toast.loading("Excluindo todos os itens…", { id: "clr" });
+    const { error } = await supabase.from("itens").delete().not("id", "is", null);
+    if (error) return toast.error(error.message, { id: "clr" });
+    toast.success("Todos os itens foram excluídos.", { id: "clr" });
+    load();
+  };
+
+
   return (
     <AppShell
       title="Cadastro de Itens"
