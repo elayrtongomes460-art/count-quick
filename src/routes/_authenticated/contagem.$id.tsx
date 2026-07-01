@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { brl, num } from "@/lib/format";
 import { toast } from "sonner";
 import { Check, CheckCircle2, Eraser, ListChecks, Plus, ScanLine } from "lucide-react";
+import { SignaturePad } from "@/components/SignaturePad";
 
 export const Route = createFileRoute("/_authenticated/contagem/$id")({
   component: Contagem,
