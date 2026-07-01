@@ -21,6 +21,12 @@ type InvItem = {
   designacao: string | null; part_number: string | null; preco_medio_pond: number; valor_divergencia: number;
 };
 
+const normalizeCodigo = (value: string | null | undefined) =>
+  String(value ?? "")
+    .replace(/[\r\n\t]/g, "")
+    .replace(/\u00a0/g, " ")
+    .trim();
+
 function Contagem() {
   const { id: inventarioId } = Route.useParams();
   const navigate = useNavigate();
@@ -54,12 +60,25 @@ function Contagem() {
   useEffect(() => { produtoRef.current?.focus(); }, []);
 
   const buscar = useCallback(async (cod: string) => {
-    const codigo = cod.trim();
+    const codigo = normalizeCodigo(cod);
     if (!codigo || processingRef.current) return;
     processingRef.current = true;
     setNotFound(false);
     try {
-      const { data, error } = await supabase.from("itens").select("*").eq("produto", codigo).maybeSingle();
+      let { data, error } = await supabase.from("itens").select("*").eq("produto", codigo).maybeSingle();
+      if (!data && !error) {
+        const compactado = codigo.replace(/\s+/g, "");
+        if (compactado !== codigo) {
+          const res = await supabase.from("itens").select("*").eq("produto", compactado).maybeSingle();
+          data = res.data;
+          error = res.error;
+        }
+      }
+      if (!data && !error) {
+        const res = await supabase.from("itens").select("*").eq("part_number", codigo).maybeSingle();
+        data = res.data;
+        error = res.error;
+      }
       if (error) { toast.error(error.message); return; }
       if (!data) { setNotFound(true); setItem(null); return; }
       const itemData = data as Item;
@@ -183,12 +202,13 @@ function Contagem() {
 
 
   const cadastrarNovo = async () => {
-    if (!produto.trim()) return;
+    const codigo = normalizeCodigo(produto);
+    if (!codigo) return;
     const designacao = prompt("Designação do novo item:");
     if (!designacao) return;
     const { data: u } = await supabase.auth.getUser();
     const { data, error } = await supabase.from("itens").insert({
-      produto: produto.trim(),
+      produto: codigo,
       designacao: designacao.trim(),
       created_by: u.user?.id,
     }).select("*").single();

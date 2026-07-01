@@ -27,6 +27,12 @@ const empty: Omit<Item, "id"> = {
   quantidade_un: 0, unidade_un: "UN", localizacao: "", preco_medio_pond: 0,
 };
 
+const normalizeCodigo = (value: string | null | undefined) =>
+  String(value ?? "")
+    .replace(/[\r\n\t]/g, "")
+    .replace(/\u00a0/g, " ")
+    .trim();
+
 function ItensPage() {
   const [itens, setItens] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +63,10 @@ function ItensPage() {
   const remover = async (i: Item) => {
     if (!confirm(`Excluir item "${i.produto}"?`)) return;
     const { error } = await supabase.from("itens").delete().eq("id", i.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (error.code === "23503") return toast.error("Este item está em inventários antigos. Atualize a página e tente novamente.");
+      return toast.error(error.message);
+    }
     toast.success("Item excluído.");
     load();
   };
@@ -82,12 +91,20 @@ function ItensPage() {
         return;
       }
       toast.loading(`Importando ${rows.length} item(ns)…`, { id: "imp" });
-      const existentes = new Set(itens.map((x) => x.produto));
+      const existentes = new Set(itens.map((x) => normalizeCodigo(x.produto)));
       let ok = 0, upd = 0, err = 0;
       for (const row of rows) {
-        const { error } = await supabase.from("itens").upsert(row, { onConflict: "produto" });
+        const payload = {
+          ...row,
+          produto: normalizeCodigo(row.produto),
+          part_number: normalizeCodigo(row.part_number),
+          designacao: String(row.designacao ?? "").trim(),
+          unidade_un: normalizeCodigo(row.unidade_un) || "UN",
+          localizacao: String(row.localizacao ?? "").trim(),
+        };
+        const { error } = await supabase.from("itens").upsert(payload, { onConflict: "produto" });
         if (error) err++;
-        else if (existentes.has(row.produto)) upd++;
+        else if (existentes.has(payload.produto)) upd++;
         else ok++;
       }
       toast.success(`Importado: ${ok} novo(s), ${upd} atualizado(s), ${err} erro(s).`, { id: "imp" });
@@ -101,30 +118,17 @@ function ItensPage() {
 
   const limparTudo = async () => {
     if (!itens.length) return toast.info("Nenhum item para limpar.");
-    const c1 = confirm(`Isso vai EXCLUIR todos os ${itens.length} itens cadastrados que NÃO estão vinculados a inventários. Deseja continuar?`);
+    const c1 = confirm(`Isso vai EXCLUIR todos os ${itens.length} códigos cadastrados. As contagens antigas dos inventários serão preservadas. Deseja continuar?`);
     if (!c1) return;
     const c2 = prompt('Para confirmar, digite LIMPAR');
     if ((c2 ?? "").trim().toUpperCase() !== "LIMPAR") return toast.info("Ação cancelada.");
     toast.loading("Excluindo itens…", { id: "clr" });
-    const { data: usados, error: eUsados } = await supabase
-      .from("inventario_itens")
-      .select("item_id")
-      .not("item_id", "is", null);
-    if (eUsados) return toast.error(eUsados.message, { id: "clr" });
-    const usadosIds = new Set((usados ?? []).map((r: any) => r.item_id));
-    const paraExcluir = itens.filter((i) => !usadosIds.has(i.id)).map((i) => i.id);
-    const bloqueados = itens.length - paraExcluir.length;
-    if (!paraExcluir.length) {
-      return toast.error(`Nenhum item pôde ser excluído: ${bloqueados} está(ão) vinculado(s) a inventários.`, { id: "clr" });
+    const { error } = await supabase.from("itens").delete().not("id", "is", null);
+    if (error) {
+      if (error.code === "23503") return toast.error("O vínculo do histórico ainda não atualizou. Recarregue a página e tente novamente.", { id: "clr" });
+      return toast.error(error.message, { id: "clr" });
     }
-    const { error } = await supabase.from("itens").delete().in("id", paraExcluir);
-    if (error) return toast.error(error.message, { id: "clr" });
-    toast.success(
-      bloqueados > 0
-        ? `${paraExcluir.length} item(ns) excluído(s). ${bloqueados} mantido(s) por estarem em inventários.`
-        : `Todos os ${paraExcluir.length} itens foram excluídos.`,
-      { id: "clr" }
-    );
+    toast.success(`Todos os ${itens.length} códigos foram excluídos.`, { id: "clr" });
     load();
   };
 
@@ -224,11 +228,11 @@ function ItemForm({ initial, onClose, onSaved }: { initial: Item; onClose: () =>
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     const payload = {
-      produto: f.produto.trim(),
-      part_number: f.part_number ?? "",
+      produto: normalizeCodigo(f.produto),
+      part_number: normalizeCodigo(f.part_number),
       designacao: f.designacao.trim(),
       quantidade_un: Number(f.quantidade_un) || 0,
-      unidade_un: f.unidade_un || "UN",
+      unidade_un: normalizeCodigo(f.unidade_un) || "UN",
       localizacao: f.localizacao ?? "",
       preco_medio_pond: Number(f.preco_medio_pond) || 0,
       created_by: u.user?.id,
