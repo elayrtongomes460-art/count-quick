@@ -12,6 +12,7 @@ export type InvForPdf = {
   observacao?: string | null;
   status: string;
   finalized_at?: string | null;
+  assinatura?: string | null;
 };
 
 export type InvItemForPdf = {
