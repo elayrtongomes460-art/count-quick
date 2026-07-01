@@ -157,13 +157,28 @@ function Contagem() {
     loadContados();
   };
 
-  const finalizar = async () => {
-    if (!confirm("Finalizar inventário? Não será possível adicionar mais itens.")) return;
-    const { error } = await supabase.from("inventarios").update({ status: "Finalizado", finalized_at: new Date().toISOString() }).eq("id", inventarioId);
-    if (error) return toast.error(error.message);
+  const finalizar = () => {
+    if (contados.length === 0) {
+      if (!confirm("Nenhum item foi contado. Finalizar mesmo assim?")) return;
+    }
+    setShowSig(true);
+  };
+
+  const confirmarFinalizacao = async (assinaturaDataUrl: string) => {
+    const { error } = await supabase
+      .from("inventarios")
+      .update({
+        status: "Finalizado",
+        finalized_at: new Date().toISOString(),
+        assinatura: assinaturaDataUrl,
+      })
+      .eq("id", inventarioId);
+    if (error) { toast.error(error.message); return; }
+    setShowSig(false);
     toast.success("Inventário finalizado.");
     navigate({ to: "/inventario/$id", params: { id: inventarioId } });
   };
+
 
   const cadastrarNovo = async () => {
     if (!produto.trim()) return;
