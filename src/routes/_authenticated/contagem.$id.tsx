@@ -21,6 +21,12 @@ type InvItem = {
   designacao: string | null; part_number: string | null; preco_medio_pond: number; valor_divergencia: number;
 };
 
+const normalizeCodigo = (value: string | null | undefined) =>
+  String(value ?? "")
+    .replace(/[\r\n\t]/g, "")
+    .replace(/\u00a0/g, " ")
+    .trim();
+
 function Contagem() {
   const { id: inventarioId } = Route.useParams();
   const navigate = useNavigate();
@@ -37,6 +43,8 @@ function Contagem() {
   const [showSig, setShowSig] = useState(false);
   const scanBufferRef = useRef<string>("");
   const lastKeyTimeRef = useRef<number>(0);
+  const scanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingCodigoRef = useRef<string>("");
   const processingRef = useRef<boolean>(false);
 
   const loadInv = useCallback(async () => {
@@ -54,12 +62,29 @@ function Contagem() {
   useEffect(() => { produtoRef.current?.focus(); }, []);
 
   const buscar = useCallback(async (cod: string) => {
-    const codigo = cod.trim();
-    if (!codigo || processingRef.current) return;
+    const codigo = normalizeCodigo(cod);
+    if (!codigo) return;
+    if (processingRef.current) {
+      pendingCodigoRef.current = codigo;
+      return;
+    }
     processingRef.current = true;
     setNotFound(false);
     try {
-      const { data, error } = await supabase.from("itens").select("*").eq("produto", codigo).maybeSingle();
+      let { data, error } = await supabase.from("itens").select("*").eq("produto", codigo).maybeSingle();
+      if (!data && !error) {
+        const compactado = codigo.replace(/\s+/g, "");
+        if (compactado !== codigo) {
+          const res = await supabase.from("itens").select("*").eq("produto", compactado).maybeSingle();
+          data = res.data;
+          error = res.error;
+        }
+      }
+      if (!data && !error) {
+        const res = await supabase.from("itens").select("*").eq("part_number", codigo).maybeSingle();
+        data = res.data;
+        error = res.error;
+      }
       if (error) { toast.error(error.message); return; }
       if (!data) { setNotFound(true); setItem(null); return; }
       const itemData = data as Item;
@@ -101,6 +126,9 @@ function Contagem() {
       produtoRef.current?.select();
     } finally {
       processingRef.current = false;
+      const pending = pendingCodigoRef.current;
+      pendingCodigoRef.current = "";
+      if (pending && pending !== codigo) void buscar(pending);
     }
   }, [inventarioId, loadContados]);
 
@@ -113,16 +141,21 @@ function Contagem() {
     const dt = now - lastKeyTimeRef.current;
     lastKeyTimeRef.current = now;
     scanBufferRef.current = v;
-    if (dt < 30 && v.length >= 3) {
-      // burst de scanner: dispara com micro-delay para pegar o Enter/últimos chars
-      setTimeout(() => {
+    if (scanTimerRef.current) clearTimeout(scanTimerRef.current);
+    if (dt < 50 && v.length >= 3) {
+      // Aguarda o bloco completo do scanner; evita buscar código parcial e marcar item cadastrado como não encontrado.
+      scanTimerRef.current = setTimeout(() => {
         if (scanBufferRef.current === v) void buscar(v);
-      }, 15);
+      }, 120);
     }
   };
 
   const onProdutoKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); void buscar(produto); }
+    if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      if (scanTimerRef.current) clearTimeout(scanTimerRef.current);
+      void buscar(produto);
+    }
   };
 
   const limpar = () => {
@@ -183,12 +216,13 @@ function Contagem() {
 
 
   const cadastrarNovo = async () => {
-    if (!produto.trim()) return;
+    const codigo = normalizeCodigo(produto);
+    if (!codigo) return;
     const designacao = prompt("Designação do novo item:");
     if (!designacao) return;
     const { data: u } = await supabase.auth.getUser();
     const { data, error } = await supabase.from("itens").insert({
-      produto: produto.trim(),
+      produto: codigo,
       designacao: designacao.trim(),
       created_by: u.user?.id,
     }).select("*").single();
