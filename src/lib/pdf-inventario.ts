@@ -721,7 +721,7 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   const sigW = (PW - M * 2 - 8) / 3;
   const sigs = [
     { label: "Responsável pelo Inventário", subline: inv.responsavel, isDate: false, sig: inv.assinatura || null },
-    { label: "Supervisor / Conferente", subline: "", isDate: false, sig: null },
+    { label: "Supervisor / Conferente", subline: "", isDate: false, sig: inv.assinatura_supervisor || null },
     { label: "Data", subline: "___/___/______", isDate: true, sig: null },
   ];
   sigs.forEach((s, i) => {
