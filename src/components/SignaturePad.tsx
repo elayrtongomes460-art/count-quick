@@ -1,18 +1,31 @@
 import { useEffect, useRef, useState } from "react";
-import { Eraser, X, Check } from "lucide-react";
+import { Eraser, X, Check, ArrowRight } from "lucide-react";
 
 type Props = {
   open: boolean;
-  title?: string;
+  steps?: string[];
   onCancel: () => void;
-  onConfirm: (dataUrl: string) => void | Promise<void>;
+  onConfirm: (signatures: string[]) => void | Promise<void>;
 };
 
-export function SignaturePad({ open, title = "Assinatura do responsável", onCancel, onConfirm }: Props) {
+export function SignaturePad({
+  open,
+  steps = ["Assinatura do responsável"],
+  onCancel,
+  onConfirm,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const hasStrokeRef = useRef(false);
+  const [step, setStep] = useState(0);
+  const [collected, setCollected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setStep(0);
+    setCollected([]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -31,7 +44,7 @@ export function SignaturePad({ open, title = "Assinatura do responsável", onCan
     ctx.strokeStyle = "#0F274B";
     ctx.lineWidth = 2.2;
     hasStrokeRef.current = false;
-  }, [open]);
+  }, [open, step]);
 
   const pos = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const c = canvasRef.current!;
@@ -67,23 +80,34 @@ export function SignaturePad({ open, title = "Assinatura do responsável", onCan
     hasStrokeRef.current = false;
   };
 
-  const confirmar = async () => {
+  const isLast = step >= steps.length - 1;
+
+  const proximo = async () => {
     if (!hasStrokeRef.current) return;
-    setSaving(true);
-    try {
-      const dataUrl = canvasRef.current!.toDataURL("image/png");
-      await onConfirm(dataUrl);
-    } finally {
-      setSaving(false);
+    const dataUrl = canvasRef.current!.toDataURL("image/png");
+    const next = [...collected, dataUrl];
+    if (isLast) {
+      setSaving(true);
+      try { await onConfirm(next); } finally { setSaving(false); }
+      return;
     }
+    setCollected(next);
+    setStep(step + 1);
   };
 
   if (!open) return null;
+  const title = steps[step];
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-card rounded-2xl w-full max-w-lg border border-border shadow-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h3 className="font-semibold">{title}</h3>
+          <div>
+            <h3 className="font-semibold">{title}</h3>
+            {steps.length > 1 && (
+              <p className="text-[11px] text-muted-foreground mt-0.5">Etapa {step + 1} de {steps.length}</p>
+            )}
+          </div>
           <button onClick={onCancel} className="p-1.5 rounded-md hover:bg-muted" aria-label="Fechar">
             <X className="size-5" />
           </button>
@@ -107,11 +131,12 @@ export function SignaturePad({ open, title = "Assinatura do responsável", onCan
               <Eraser className="size-4" /> Limpar
             </button>
             <button
-              onClick={confirmar}
+              onClick={proximo}
               disabled={saving}
               className="py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              <Check className="size-4" /> {saving ? "Salvando…" : "Confirmar e finalizar"}
+              {isLast ? (<><Check className="size-4" /> {saving ? "Salvando…" : "Confirmar e finalizar"}</>)
+                     : (<>Próximo <ArrowRight className="size-4" /></>)}
             </button>
           </div>
         </div>
