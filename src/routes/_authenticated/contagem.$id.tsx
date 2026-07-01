@@ -43,6 +43,8 @@ function Contagem() {
   const [showSig, setShowSig] = useState(false);
   const scanBufferRef = useRef<string>("");
   const lastKeyTimeRef = useRef<number>(0);
+  const scanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingCodigoRef = useRef<string>("");
   const processingRef = useRef<boolean>(false);
 
   const loadInv = useCallback(async () => {
@@ -61,7 +63,11 @@ function Contagem() {
 
   const buscar = useCallback(async (cod: string) => {
     const codigo = normalizeCodigo(cod);
-    if (!codigo || processingRef.current) return;
+    if (!codigo) return;
+    if (processingRef.current) {
+      pendingCodigoRef.current = codigo;
+      return;
+    }
     processingRef.current = true;
     setNotFound(false);
     try {
@@ -120,6 +126,9 @@ function Contagem() {
       produtoRef.current?.select();
     } finally {
       processingRef.current = false;
+      const pending = pendingCodigoRef.current;
+      pendingCodigoRef.current = "";
+      if (pending && pending !== codigo) void buscar(pending);
     }
   }, [inventarioId, loadContados]);
 
@@ -132,16 +141,21 @@ function Contagem() {
     const dt = now - lastKeyTimeRef.current;
     lastKeyTimeRef.current = now;
     scanBufferRef.current = v;
-    if (dt < 30 && v.length >= 3) {
-      // burst de scanner: dispara com micro-delay para pegar o Enter/últimos chars
-      setTimeout(() => {
+    if (scanTimerRef.current) clearTimeout(scanTimerRef.current);
+    if (dt < 50 && v.length >= 3) {
+      // Aguarda o bloco completo do scanner; evita buscar código parcial e marcar item cadastrado como não encontrado.
+      scanTimerRef.current = setTimeout(() => {
         if (scanBufferRef.current === v) void buscar(v);
-      }, 15);
+      }, 120);
     }
   };
 
   const onProdutoKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); void buscar(produto); }
+    if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      if (scanTimerRef.current) clearTimeout(scanTimerRef.current);
+      void buscar(produto);
+    }
   };
 
   const limpar = () => {
