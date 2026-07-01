@@ -101,14 +101,30 @@ function ItensPage() {
 
   const limparTudo = async () => {
     if (!itens.length) return toast.info("Nenhum item para limpar.");
-    const c1 = confirm(`Isso vai EXCLUIR todos os ${itens.length} itens cadastrados. Deseja continuar?`);
+    const c1 = confirm(`Isso vai EXCLUIR todos os ${itens.length} itens cadastrados que NÃO estão vinculados a inventários. Deseja continuar?`);
     if (!c1) return;
     const c2 = prompt('Para confirmar, digite LIMPAR');
     if ((c2 ?? "").trim().toUpperCase() !== "LIMPAR") return toast.info("Ação cancelada.");
-    toast.loading("Excluindo todos os itens…", { id: "clr" });
-    const { error } = await supabase.from("itens").delete().not("id", "is", null);
+    toast.loading("Excluindo itens…", { id: "clr" });
+    const { data: usados, error: eUsados } = await supabase
+      .from("inventario_itens")
+      .select("item_id")
+      .not("item_id", "is", null);
+    if (eUsados) return toast.error(eUsados.message, { id: "clr" });
+    const usadosIds = new Set((usados ?? []).map((r: any) => r.item_id));
+    const paraExcluir = itens.filter((i) => !usadosIds.has(i.id)).map((i) => i.id);
+    const bloqueados = itens.length - paraExcluir.length;
+    if (!paraExcluir.length) {
+      return toast.error(`Nenhum item pôde ser excluído: ${bloqueados} está(ão) vinculado(s) a inventários.`, { id: "clr" });
+    }
+    const { error } = await supabase.from("itens").delete().in("id", paraExcluir);
     if (error) return toast.error(error.message, { id: "clr" });
-    toast.success("Todos os itens foram excluídos.", { id: "clr" });
+    toast.success(
+      bloqueados > 0
+        ? `${paraExcluir.length} item(ns) excluído(s). ${bloqueados} mantido(s) por estarem em inventários.`
+        : `Todos os ${paraExcluir.length} itens foram excluídos.`,
+      { id: "clr" }
+    );
     load();
   };
 
