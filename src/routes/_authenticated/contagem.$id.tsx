@@ -34,6 +34,7 @@ function Contagem() {
   const [qtdContada, setQtdContada] = useState("");
   const [contados, setContados] = useState<InvItem[]>([]);
   const [showList, setShowList] = useState(false);
+  const [showSig, setShowSig] = useState(false);
   const scanBufferRef = useRef<string>("");
   const lastKeyTimeRef = useRef<number>(0);
   const processingRef = useRef<boolean>(false);
