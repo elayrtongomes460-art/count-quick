@@ -150,6 +150,7 @@ export type Database = {
       }
       inventarios: {
         Row: {
+          assinatura: string | null
           created_at: string
           data: string
           finalized_at: string | null
@@ -162,6 +163,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assinatura?: string | null
           created_at?: string
           data?: string
           finalized_at?: string | null
@@ -174,6 +176,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assinatura?: string | null
           created_at?: string
           data?: string
           finalized_at?: string | null

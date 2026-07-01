@@ -12,6 +12,7 @@ export type InvForPdf = {
   observacao?: string | null;
   status: string;
   finalized_at?: string | null;
+  assinatura?: string | null;
 };
 
 export type InvItemForPdf = {
@@ -171,8 +172,8 @@ function iconEdit(doc: jsPDF, x: number, y: number, s: number, color: [number, n
 // =====================================================================
 export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[]) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const PW = 210, PH = 297;
-  const M = 8;
+  const PW = 297, PH = 210;
+  const M = 10;
 
   const logoData = await loadLogo();
 
@@ -709,15 +710,20 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   if (yAfter + 24 > PH - 12) { doc.addPage(); yAfter = 22; }
   const sigW = (PW - M * 2 - 8) / 3;
   const sigs = [
-    { icon: () => iconEdit, label: "Responsável pelo Inventário", subline: inv.responsavel },
-    { icon: () => iconEdit, label: "Supervisor / Conferente", subline: "" },
-    { icon: () => iconCalendar, label: "Data", subline: "___/___/______" },
+    { label: "Responsável pelo Inventário", subline: inv.responsavel, isDate: false, sig: inv.assinatura || null },
+    { label: "Supervisor / Conferente", subline: "", isDate: false, sig: null },
+    { label: "Data", subline: "___/___/______", isDate: true, sig: null },
   ];
   sigs.forEach((s, i) => {
     const sx = M + i * (sigW + 4);
-    // ícone
-    if (i === 2) iconCalendar(doc, sx + sigW / 2 - 3, yAfter, 6, AZUL);
-    else iconEdit(doc, sx + sigW / 2 - 3, yAfter, 6, AZUL);
+    // assinatura desenhada (se houver)
+    if (s.sig) {
+      try { doc.addImage(s.sig, "PNG", sx + 4, yAfter - 4, sigW - 8, 14); } catch { /* ignore */ }
+    } else if (s.isDate) {
+      iconCalendar(doc, sx + sigW / 2 - 3, yAfter, 6, AZUL);
+    } else {
+      iconEdit(doc, sx + sigW / 2 - 3, yAfter, 6, AZUL);
+    }
     // linha
     setDraw(doc, [80, 80, 90]); doc.setLineWidth(0.4);
     doc.line(sx + 4, yAfter + 10, sx + sigW - 4, yAfter + 10);
