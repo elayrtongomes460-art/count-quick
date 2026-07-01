@@ -151,6 +151,7 @@ export type Database = {
       inventarios: {
         Row: {
           assinatura: string | null
+          assinatura_supervisor: string | null
           created_at: string
           data: string
           finalized_at: string | null
@@ -164,6 +165,7 @@ export type Database = {
         }
         Insert: {
           assinatura?: string | null
+          assinatura_supervisor?: string | null
           created_at?: string
           data?: string
           finalized_at?: string | null
@@ -177,6 +179,7 @@ export type Database = {
         }
         Update: {
           assinatura?: string | null
+          assinatura_supervisor?: string | null
           created_at?: string
           data?: string
           finalized_at?: string | null

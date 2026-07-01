@@ -1,0 +1,1 @@
+ALTER TABLE public.inventarios ADD COLUMN IF NOT EXISTS assinatura_supervisor TEXT;
