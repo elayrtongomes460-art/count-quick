@@ -718,12 +718,12 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   // ASSINATURAS
   // ============================================================
   if (yAfter + 24 > PH - 12) { doc.addPage(); yAfter = 22; }
-  const sigW = (PW - M * 2 - 8) / 3;
+  const sigW = (PW - M * 2 - 4) / 2;
   const sigs = [
     { label: "Responsável pelo Inventário", subline: inv.responsavel, isDate: false, sig: inv.assinatura || null },
     { label: "Supervisor / Conferente", subline: "", isDate: false, sig: inv.assinatura_supervisor || null },
-    { label: "Data", subline: "___/___/______", isDate: true, sig: null },
   ];
+
   sigs.forEach((s, i) => {
     const sx = M + i * (sigW + 4);
     // assinatura desenhada (se houver)
