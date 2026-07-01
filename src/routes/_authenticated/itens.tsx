@@ -146,6 +146,10 @@ function ItensPage() {
           </button>
           <input ref={fileRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xls,.docx,.pdf" hidden onChange={e => e.target.files?.[0] && importFile(e.target.files[0])} />
         </div>
+        <button onClick={limparTudo} className="w-full py-2.5 rounded-lg border border-destructive/40 bg-destructive/10 text-destructive font-medium text-sm flex items-center justify-center gap-2">
+          <Eraser className="size-4" /> Limpar tudo
+        </button>
+
         <div className="text-[11px] text-muted-foreground px-1 -mt-1">
           Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, quantidade_un, unidade_un, localizacao, preco_medio_pond.
         </div>
