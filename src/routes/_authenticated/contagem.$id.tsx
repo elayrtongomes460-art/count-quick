@@ -164,13 +164,15 @@ function Contagem() {
     setShowSig(true);
   };
 
-  const confirmarFinalizacao = async (assinaturaDataUrl: string) => {
+  const confirmarFinalizacao = async (sigs: string[]) => {
+    const [assinatura, assinatura_supervisor] = sigs;
     const { error } = await supabase
       .from("inventarios")
       .update({
         status: "Finalizado",
         finalized_at: new Date().toISOString(),
-        assinatura: assinaturaDataUrl,
+        assinatura,
+        assinatura_supervisor: assinatura_supervisor ?? null,
       })
       .eq("id", inventarioId);
     if (error) { toast.error(error.message); return; }
