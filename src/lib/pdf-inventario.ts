@@ -660,13 +660,18 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   const clearBoxY = yAfter + 10;
   setFill(doc, BRANCO); doc.rect(c2x + 1, clearBoxY, bottomW - 2, cardBoxH - 11, "F");
 
+  const partidaStr = startIso ? dateBR(startIso) : "—";
+  const finalizadaStr = inv.finalized_at ? dateBR(inv.finalized_at) : "—";
   const estList: { icon: (cx: number, cy: number) => void; l: string; v: string }[] = [
     { icon: (cx, cy) => iconCheckCircle(doc, cx, cy, 2, VERDE), l: "Itens conferidos:", v: `${conferidos} (${num(pctConf, 2)}%)` },
     { icon: (cx, cy) => iconCheckCircle(doc, cx, cy, 2, VERDE), l: "Sem divergência:", v: `${semDif} (${num((semDif / Math.max(1, totalItens)) * 100, 2)}%)` },
     { icon: (cx, cy) => iconPlusCircle(doc, cx, cy, 2, LARANJA), l: "Com divergência:", v: `${comDif} (${num(pctDiv, 2)}%)` },
+    { icon: (cx, cy) => iconClock(doc, cx, cy, 2, AZUL_LINK), l: "Partida:", v: partidaStr },
+    { icon: (cx, cy) => iconClock(doc, cx, cy, 2, VERDE), l: "Finalizada:", v: finalizadaStr },
     { icon: (cx, cy) => iconClock(doc, cx, cy, 2, AZUL_LINK), l: "Tempo de inventário:", v: tempoLabel },
     { icon: (cx, cy) => iconUser(doc, cx - 2, cy - 2, 4, AZUL), l: "Operador:", v: inv.responsavel },
   ];
+
   estList.forEach((r, i) => {
     const ry = yAfter + 15 + i * 7.5;
     r.icon(c2x + 6, ry - 1);
