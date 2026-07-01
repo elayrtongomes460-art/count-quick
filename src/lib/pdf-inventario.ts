@@ -13,6 +13,8 @@ export type InvForPdf = {
   status: string;
   finalized_at?: string | null;
   assinatura?: string | null;
+  assinatura_supervisor?: string | null;
+  created_at?: string | null;
 };
 
 export type InvItemForPdf = {
@@ -201,13 +203,20 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   const nowStr = dateBR(nowIso);
   const [nowData, nowHora] = nowStr.split(" ");
 
-  // Tempo estimado (finalized - created; usamos data como referência se necessário)
+  // Tempo real de inventário (created_at → finalized_at)
   let tempoMin = 0;
-  if (inv.finalized_at) {
-    const start = new Date(inv.data).getTime();
+  const startIso = inv.created_at || inv.data;
+  if (inv.finalized_at && startIso) {
+    const start = new Date(startIso).getTime();
     const end = new Date(inv.finalized_at).getTime();
     tempoMin = Math.max(0, Math.round((end - start) / 60000));
   }
+  const tempoLabel = tempoMin < 1
+    ? "menos de 1 min"
+    : tempoMin < 60
+      ? `${tempoMin} min`
+      : `${Math.floor(tempoMin / 60)}h ${tempoMin % 60}min`;
+
 
   // ============================================================
   // CABEÇALHO
@@ -655,7 +664,7 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
     { icon: (cx, cy) => iconCheckCircle(doc, cx, cy, 2, VERDE), l: "Itens conferidos:", v: `${conferidos} (${num(pctConf, 2)}%)` },
     { icon: (cx, cy) => iconCheckCircle(doc, cx, cy, 2, VERDE), l: "Sem divergência:", v: `${semDif} (${num((semDif / Math.max(1, totalItens)) * 100, 2)}%)` },
     { icon: (cx, cy) => iconPlusCircle(doc, cx, cy, 2, LARANJA), l: "Com divergência:", v: `${comDif} (${num(pctDiv, 2)}%)` },
-    { icon: (cx, cy) => iconClock(doc, cx, cy, 2, AZUL_LINK), l: "Tempo de inventário:", v: `${tempoMin} minutos` },
+    { icon: (cx, cy) => iconClock(doc, cx, cy, 2, AZUL_LINK), l: "Tempo de inventário:", v: tempoLabel },
     { icon: (cx, cy) => iconUser(doc, cx - 2, cy - 2, 4, AZUL), l: "Operador:", v: inv.responsavel },
   ];
   estList.forEach((r, i) => {
@@ -712,7 +721,7 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   const sigW = (PW - M * 2 - 8) / 3;
   const sigs = [
     { label: "Responsável pelo Inventário", subline: inv.responsavel, isDate: false, sig: inv.assinatura || null },
-    { label: "Supervisor / Conferente", subline: "", isDate: false, sig: null },
+    { label: "Supervisor / Conferente", subline: "", isDate: false, sig: inv.assinatura_supervisor || null },
     { label: "Data", subline: "___/___/______", isDate: true, sig: null },
   ];
   sigs.forEach((s, i) => {
