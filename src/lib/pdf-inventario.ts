@@ -646,21 +646,9 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   setText(doc, AZUL); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
   doc.text("Estatísticas do Inventário", c2x + 4, yAfter + 6);
   setDraw(doc, CINZA_LINHA); doc.line(c2x + 4, yAfter + 8, c2x + bottomW - 4, yAfter + 8);
-  const estRows = [
-    { icon: () => iconCheckCircle(doc, c2x + 6, yAfter + 14, 2, VERDE), l: "Itens conferidos:", v: `${conferidos} (${num(pctConf, 2)}%)` },
-    { icon: () => iconCheckCircle(doc, c2x + 6, yAfter + 22, 2, VERDE), l: "Sem divergência:", v: `${semDif} (${num((semDif / Math.max(1, totalItens)) * 100, 2)}%)` },
-    { icon: () => iconPlusCircle(doc, c2x + 6, yAfter + 30, 2, LARANJA), l: "Com divergência:", v: `${comDif} (${num(pctDiv, 2)}%)` },
-    { icon: () => iconClock(doc, c2x + 6, yAfter + 38, 2, AZUL_LINK), l: "Tempo de inventário:", v: `${tempoMin} minutos` },
-    { icon: () => iconUser(doc, c2x + 4, yAfter + 44, 4, AZUL), l: "Operador:", v: inv.responsavel },
-  ];
-  estRows.forEach(r => {
-    r.icon();
-    setText(doc, CINZA_TXT); doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
-    doc.text(r.l, c2x + 11, (r.l === "Operador:" ? yAfter + 46 : Number((r.icon as unknown as { arguments?: unknown }).arguments ?? 0)) || 0);
-  });
-  // rewrite: (posições ficaram bagunçadas acima). Redesenhar de forma simples:
   const clearBoxY = yAfter + 10;
   setFill(doc, BRANCO); doc.rect(c2x + 1, clearBoxY, bottomW - 2, cardBoxH - 11, "F");
+
   const estList: { icon: (cx: number, cy: number) => void; l: string; v: string }[] = [
     { icon: (cx, cy) => iconCheckCircle(doc, cx, cy, 2, VERDE), l: "Itens conferidos:", v: `${conferidos} (${num(pctConf, 2)}%)` },
     { icon: (cx, cy) => iconCheckCircle(doc, cx, cy, 2, VERDE), l: "Sem divergência:", v: `${semDif} (${num((semDif / Math.max(1, totalItens)) * 100, 2)}%)` },
