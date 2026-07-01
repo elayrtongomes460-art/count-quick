@@ -79,7 +79,7 @@ const parseExcel = (buf: ArrayBuffer): RawRow[] => {
   const wb = XLSX.read(buf, { type: "array" });
   const out: RawRow[] = [];
   for (const name of wb.SheetNames) {
-    const json = XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets[name], { defval: "" });
+    const json = XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets[name], { defval: "", raw: false });
     for (const o of json) {
       const r = toRow(o);
       if (r) out.push(r);
