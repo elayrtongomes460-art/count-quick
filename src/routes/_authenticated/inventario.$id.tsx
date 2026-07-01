@@ -76,7 +76,7 @@ function Detalhes() {
       title={inv.nome_inventario}
       action={
         <div className="flex gap-1.5">
-          <button onClick={() => gerarPdfInventario(inv, itens)} className="p-2 rounded-md bg-primary text-primary-foreground" aria-label="Baixar PDF"><FileDown className="size-5" /></button>
+          <button onClick={() => { void gerarPdfInventario(inv, itens); }} className="p-2 rounded-md bg-primary text-primary-foreground" aria-label="Baixar PDF"><FileDown className="size-5" /></button>
           <button onClick={exportCsv} className="p-2 rounded-md bg-accent text-accent-foreground" aria-label="Exportar CSV"><Download className="size-5" /></button>
         </div>
       }

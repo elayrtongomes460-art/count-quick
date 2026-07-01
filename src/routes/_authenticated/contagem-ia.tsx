@@ -221,13 +221,46 @@ function ContagemIA() {
     }
   }, [snapshot, detections, classe, confianca, qtdEsperada, detalhes, inventario, produto, partNumber, observacao, navigate]);
 
-  // Overlay click handler for manual edit
+  // Overlay: mede o rect real da IMAGEM (não do container) para posicionar marcadores
+  const imgRef = useRef<HTMLImageElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const [imgRect, setImgRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+
+  const measureImg = useCallback(() => {
+    const img = imgRef.current;
+    const wrap = overlayRef.current;
+    if (!img || !wrap || !img.naturalWidth) return;
+    const wr = wrap.getBoundingClientRect();
+    // object-contain: calcula o rect real da imagem dentro do wrapper
+    const ratio = img.naturalWidth / img.naturalHeight;
+    const wrapRatio = wr.width / wr.height;
+    let dw: number, dh: number;
+    if (ratio > wrapRatio) { dw = wr.width; dh = wr.width / ratio; }
+    else { dh = wr.height; dw = wr.height * ratio; }
+    const left = (wr.width - dw) / 2;
+    const top = (wr.height - dh) / 2;
+    setImgRect({ left, top, width: dw, height: dh });
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "review") return;
+    measureImg();
+    const ro = new ResizeObserver(() => measureImg());
+    if (overlayRef.current) ro.observe(overlayRef.current);
+    window.addEventListener("resize", measureImg);
+    window.addEventListener("orientationchange", measureImg);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measureImg); window.removeEventListener("orientationchange", measureImg); };
+  }, [phase, snapshot, measureImg]);
+
   const addMarker = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = overlayRef.current; if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
+    if (!imgRect) return;
+    const wrap = overlayRef.current; if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const px = e.clientX - rect.left - imgRect.left;
+    const py = e.clientY - rect.top - imgRect.top;
+    if (px < 0 || py < 0 || px > imgRect.width || py > imgRect.height) return;
+    const x = px / imgRect.width;
+    const y = py / imgRect.height;
     setDetections((arr) => [...arr, { x, y, w: 0.06, h: 0.06, classe: classe || "item", confianca: 1 }]);
   };
   const removeMarker = (idx: number, e: React.MouseEvent) => {
@@ -251,23 +284,28 @@ function ContagemIA() {
 
         <div className="relative flex-1 overflow-hidden bg-black">
           {snapshot && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                ref={overlayRef}
-                onClick={addMarker}
-                className="relative cursor-crosshair"
-                style={{
-                  aspectRatio: `${snapshot.w} / ${snapshot.h}`,
-                  maxWidth: "100%", maxHeight: "100%",
-                  width: snapshot.w > snapshot.h ? "100%" : "auto",
-                  height: snapshot.w > snapshot.h ? "auto" : "100%",
-                }}
-              >
-                <img src={snapshot.url} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" />
-                {detections.map((d, i) => (
-                  <Marker key={i} index={i + 1} d={d} onRemove={(e) => removeMarker(i, e)} />
-                ))}
-              </div>
+            <div
+              ref={overlayRef}
+              onClick={addMarker}
+              className="absolute inset-0 cursor-crosshair"
+            >
+              <img
+                ref={imgRef}
+                src={snapshot.url}
+                alt=""
+                onLoad={measureImg}
+                className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                draggable={false}
+              />
+              {imgRect && detections.map((d, i) => (
+                <Marker
+                  key={i}
+                  index={i + 1}
+                  d={d}
+                  rect={imgRect}
+                  onRemove={(e) => removeMarker(i, e)}
+                />
+              ))}
             </div>
           )}
 
@@ -411,16 +449,17 @@ function ContagemIA() {
   );
 }
 
-function Marker({ index, d, onRemove }: { index: number; d: Detection; onRemove: (e: React.MouseEvent) => void }) {
-  // Tamanho do círculo proporcional à bbox, com mínimo legível e máximo controlado
-  // para que a "bolinha" fique sobre o objeto sem cobrir vizinhos.
-  const bboxPx = Math.max(d.w, d.h) * 280;
-  const size = Math.max(20, Math.min(44, bboxPx * 0.55));
+function Marker({ index, d, rect, onRemove }: { index: number; d: Detection; rect: { left: number; top: number; width: number; height: number }; onRemove: (e: React.MouseEvent) => void }) {
+  // Posição em pixels absolutos DENTRO do overlay, mapeada para o rect real da imagem exibida.
+  const cxPx = rect.left + d.x * rect.width;
+  const cyPx = rect.top + d.y * rect.height;
+  const bboxPx = Math.max(d.w * rect.width, d.h * rect.height);
+  const size = Math.max(20, Math.min(48, bboxPx * 0.55));
   return (
     <button
       onClick={onRemove}
       className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent text-accent-foreground font-bold border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.5)] flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors ring-1 ring-black/30"
-      style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%`, width: size, height: size, fontSize: Math.max(10, size * 0.42) }}
+      style={{ left: cxPx, top: cyPx, width: size, height: size, fontSize: Math.max(10, size * 0.42) }}
       title={`${d.classe} · ${Math.round(d.confianca * 100)}%`}
     >
       {index}

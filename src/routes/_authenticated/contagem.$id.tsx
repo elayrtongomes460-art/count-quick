@@ -33,7 +33,9 @@ function Contagem() {
   const [qtdContada, setQtdContada] = useState("");
   const [contados, setContados] = useState<InvItem[]>([]);
   const [showList, setShowList] = useState(false);
-  const [searchTimer, setSearchTimer] = useState<number | null>(null);
+  const scanBufferRef = useRef<string>("");
+  const lastKeyTimeRef = useRef<number>(0);
+  const processingRef = useRef<boolean>(false);
 
   const loadInv = useCallback(async () => {
     const { data } = await supabase.from("inventarios").select("nome_inventario,status").eq("id", inventarioId).single();
@@ -50,63 +52,75 @@ function Contagem() {
   useEffect(() => { produtoRef.current?.focus(); }, []);
 
   const buscar = useCallback(async (cod: string) => {
+    const codigo = cod.trim();
+    if (!codigo || processingRef.current) return;
+    processingRef.current = true;
     setNotFound(false);
-    setItem(null);
-    if (!cod.trim()) return;
-    const { data, error } = await supabase.from("itens").select("*").eq("produto", cod.trim()).maybeSingle();
-    if (error) return toast.error(error.message);
-    if (!data) { setNotFound(true); return; }
-    const itemData = data as Item;
-    setItem(itemData);
-    // busca a quantidade atual DIRETO no banco para evitar estado defasado entre bipadas rápidas
-    const { data: existing } = await supabase
-      .from("inventario_itens")
-      .select("quantidade_contada")
-      .eq("inventario_id", inventarioId)
-      .eq("produto", itemData.produto)
-      .maybeSingle();
-    const novaQtd = existing ? Number(existing.quantidade_contada) + 1 : 1;
-    setQtdContada(String(novaQtd));
-    const diferenca = novaQtd - Number(itemData.quantidade_un);
-    const valor_divergencia = diferenca * Number(itemData.preco_medio_pond);
-    const payload = {
-      inventario_id: inventarioId,
-      item_id: itemData.id,
-      produto: itemData.produto,
-      part_number: itemData.part_number,
-      designacao: itemData.designacao,
-      quantidade_un_sistema: itemData.quantidade_un,
-      unidade_un: itemData.unidade_un,
-      localizacao: itemData.localizacao,
-      preco_medio_pond: itemData.preco_medio_pond,
-      quantidade_contada: novaQtd,
-      diferenca,
-      valor_divergencia,
-    };
-    const { error: upErr } = await supabase.from("inventario_itens").upsert(payload, { onConflict: "inventario_id,produto" });
-    if (upErr) return toast.error(upErr.message);
-    toast.success(`${itemData.produto}: ${novaQtd}`);
-    await loadContados();
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.from("itens").select("*").eq("produto", codigo).maybeSingle();
+      if (error) { toast.error(error.message); return; }
+      if (!data) { setNotFound(true); setItem(null); return; }
+      const itemData = data as Item;
+      // busca a quantidade atual DIRETO no banco para evitar estado defasado entre bipadas rápidas
+      const { data: existing } = await supabase
+        .from("inventario_itens")
+        .select("quantidade_contada")
+        .eq("inventario_id", inventarioId)
+        .eq("produto", itemData.produto)
+        .maybeSingle();
+      const novaQtd = existing ? Number(existing.quantidade_contada) + 1 : 1;
+      const diferenca = novaQtd - Number(itemData.quantidade_un);
+      const valor_divergencia = diferenca * Number(itemData.preco_medio_pond);
+      const payload = {
+        inventario_id: inventarioId,
+        item_id: itemData.id,
+        produto: itemData.produto,
+        part_number: itemData.part_number,
+        designacao: itemData.designacao,
+        quantidade_un_sistema: itemData.quantidade_un,
+        unidade_un: itemData.unidade_un,
+        localizacao: itemData.localizacao,
+        preco_medio_pond: itemData.preco_medio_pond,
+        quantidade_contada: novaQtd,
+        diferenca,
+        valor_divergencia,
+      };
+      const { error: upErr } = await supabase.from("inventario_itens").upsert(payload, { onConflict: "inventario_id,produto" });
+      if (upErr) { toast.error(upErr.message); return; }
+      // feedback instantâneo (sem aguardar reload)
+      setItem(itemData);
+      setQtdContada(String(novaQtd));
+      toast.success(`${itemData.produto}: ${novaQtd}`, { duration: 1200 });
+      // recarrega lista em background (não bloqueia próxima bipada)
+      void loadContados();
+      // limpa imediatamente para próxima leitura (sem timeout)
       setProduto("");
-      setItem(null);
-      setQtdContada("");
-      setNotFound(false);
       produtoRef.current?.focus();
-    }, 500);
+      produtoRef.current?.select();
+    } finally {
+      processingRef.current = false;
+    }
   }, [inventarioId, loadContados]);
 
-  // Debounce/scan detection
   const onProdutoChange = (v: string) => {
     setProduto(v);
-    if (searchTimer) window.clearTimeout(searchTimer);
     if (!v.trim()) { setItem(null); setNotFound(false); return; }
-    const t = window.setTimeout(() => buscar(v), 250);
-    setSearchTimer(t);
+    // Scanners de hardware (Zebra/Honeywell/Chainway) enviam caracteres muito rápido.
+    // Se um bloco chegar em <30ms/char, disparamos leitura logo após o último char (sem esperar Enter).
+    const now = performance.now();
+    const dt = now - lastKeyTimeRef.current;
+    lastKeyTimeRef.current = now;
+    scanBufferRef.current = v;
+    if (dt < 30 && v.length >= 3) {
+      // burst de scanner: dispara com micro-delay para pegar o Enter/últimos chars
+      setTimeout(() => {
+        if (scanBufferRef.current === v) void buscar(v);
+      }, 15);
+    }
   };
 
   const onProdutoKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") { e.preventDefault(); buscar(produto); }
+    if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); void buscar(produto); }
   };
 
   const limpar = () => {
