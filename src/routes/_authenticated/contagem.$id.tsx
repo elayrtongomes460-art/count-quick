@@ -311,6 +311,13 @@ function Contagem() {
           finalizado={finalizado}
         />
       )}
+
+      <SignaturePad
+        open={showSig}
+        title="Assinatura do responsável"
+        onCancel={() => setShowSig(false)}
+        onConfirm={confirmarFinalizacao}
+      />
     </AppShell>
   );
 }
