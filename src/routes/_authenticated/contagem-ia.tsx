@@ -181,8 +181,15 @@ function ContagemIA() {
   const capture = async () => {
     const v = videoRef.current;
     if (!v || !v.videoWidth) { toast.error("Câmera não pronta"); return; }
+    // Grab bitmap BEFORE stopping stream (stopping blanks the video element)
+    const bmp = await createImageBitmap(v);
+    const c = document.createElement("canvas");
+    c.width = bmp.width; c.height = bmp.height;
+    c.getContext("2d")!.drawImage(bmp, 0, 0);
+    bmp.close?.();
+    const blob: Blob = await new Promise((r) => c.toBlob((b) => r(b!), "image/jpeg", 0.95)!);
     stopCamera();
-    await runPipeline(v);
+    await runPipeline(blob);
   };
 
   const onGallery = async (file: File | null) => {
