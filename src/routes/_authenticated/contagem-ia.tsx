@@ -1,14 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft, Camera, CheckCircle2, Download, Image as ImageIcon,
   Loader2, RotateCcw, Save, Scan, X, Zap, ZapOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { detectarObjetosPro } from "@/lib/ai/detection-pro.functions";
+import { detectLocal } from "@/lib/ai/local-engine";
 import { preprocessImage, type PreprocessOutput } from "@/lib/ai/preprocessing";
 import { DetectionOverlay } from "@/lib/ai/overlay";
 import { renderAnnotatedImage, downloadBlob } from "@/lib/ai/export";
@@ -32,7 +31,6 @@ type Phase = "setup" | "processing" | "review" | "saving";
 function ContagemIA() {
   const { inventario, produto: produtoParam } = Route.useSearch();
   const navigate = useNavigate();
-  const detect = useServerFn(detectarObjetosPro);
 
   // --- camera ---
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -132,30 +130,8 @@ function ContagemIA() {
       const pre = await preprocessImage(source, (e) => setProgress(e));
       setPreproc(pre);
 
-      setProgress({ step: "ai_pass_1", label: "IA: primeira análise", pct: 45 });
-      // primeira passada (roda dentro do server fn como parte da dupla passagem)
-      // exibimos progresso simulado enquanto a IA trabalha
-      const tickInterval = setInterval(() => {
-        setProgress((p) => {
-          if (!p) return p;
-          if (p.step === "ai_pass_1" && p.pct < 65) return { ...p, pct: p.pct + 1 };
-          if (p.step === "ai_pass_2" && p.pct < 90) return { ...p, pct: p.pct + 1 };
-          return p;
-        });
-      }, 250);
-      setTimeout(() => setProgress({ step: "ai_pass_2", label: "IA: validação (2ª análise)", pct: 70 }), 2500);
-
-      const result = await detect({
-        data: {
-          imageBase64: pre.processed.base64,
-          mimeType: "image/jpeg",
-          pieceType,
-          promptHint: profile.promptHint,
-        },
-      });
-      clearInterval(tickInterval);
-
-      setProgress({ step: "reconcile", label: "Reconciliando resultados", pct: 95 });
+      // Inferência 100% local — nenhuma imagem sai do dispositivo.
+      const result = await detectLocal(pre.processed.blob, pieceType, (e) => setProgress(e));
 
       const asMarkers: Marker[] = result.detections.map((d) => ({
         id: newMarkerId(),
@@ -176,7 +152,7 @@ function ContagemIA() {
       toast.error(e instanceof Error ? e.message : "Falha na análise");
       setPhase("setup");
     }
-  }, [detect, pieceType, profile.promptHint]);
+  }, [pieceType]);
 
   const capture = async () => {
     const v = videoRef.current;
@@ -263,7 +239,7 @@ function ContagemIA() {
         quantidade_arruelas: pieceType === "arruela" ? total : 0,
         total_itens: total,
         resultado_json: JSON.parse(JSON.stringify({
-          modo: "ia_pro_v2",
+          modo: "ia_local_v1",
           piece_type: pieceType,
           confianca_media: confianca,
           passadas,
