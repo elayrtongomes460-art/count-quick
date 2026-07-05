@@ -1,14 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft, Camera, CheckCircle2, Download, Image as ImageIcon,
   Loader2, RotateCcw, Save, Scan, X, Zap, ZapOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { detectarObjetosPro } from "@/lib/ai/detection-pro.functions";
+import { detectLocal } from "@/lib/ai/local-engine";
 import { preprocessImage, type PreprocessOutput } from "@/lib/ai/preprocessing";
 import { DetectionOverlay } from "@/lib/ai/overlay";
 import { renderAnnotatedImage, downloadBlob } from "@/lib/ai/export";
