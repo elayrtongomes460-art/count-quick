@@ -239,7 +239,7 @@ function ContagemIA() {
         quantidade_arruelas: pieceType === "arruela" ? total : 0,
         total_itens: total,
         resultado_json: JSON.parse(JSON.stringify({
-          modo: "ia_pro_v2",
+          modo: "ia_local_v1",
           piece_type: pieceType,
           confianca_media: confianca,
           passadas,
