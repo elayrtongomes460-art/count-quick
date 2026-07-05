@@ -31,7 +31,6 @@ type Phase = "setup" | "processing" | "review" | "saving";
 function ContagemIA() {
   const { inventario, produto: produtoParam } = Route.useSearch();
   const navigate = useNavigate();
-  const detect = useServerFn(detectarObjetosPro);
 
   // --- camera ---
   const videoRef = useRef<HTMLVideoElement | null>(null);
