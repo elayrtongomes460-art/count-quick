@@ -130,30 +130,8 @@ function ContagemIA() {
       const pre = await preprocessImage(source, (e) => setProgress(e));
       setPreproc(pre);
 
-      setProgress({ step: "ai_pass_1", label: "IA: primeira análise", pct: 45 });
-      // primeira passada (roda dentro do server fn como parte da dupla passagem)
-      // exibimos progresso simulado enquanto a IA trabalha
-      const tickInterval = setInterval(() => {
-        setProgress((p) => {
-          if (!p) return p;
-          if (p.step === "ai_pass_1" && p.pct < 65) return { ...p, pct: p.pct + 1 };
-          if (p.step === "ai_pass_2" && p.pct < 90) return { ...p, pct: p.pct + 1 };
-          return p;
-        });
-      }, 250);
-      setTimeout(() => setProgress({ step: "ai_pass_2", label: "IA: validação (2ª análise)", pct: 70 }), 2500);
-
-      const result = await detect({
-        data: {
-          imageBase64: pre.processed.base64,
-          mimeType: "image/jpeg",
-          pieceType,
-          promptHint: profile.promptHint,
-        },
-      });
-      clearInterval(tickInterval);
-
-      setProgress({ step: "reconcile", label: "Reconciliando resultados", pct: 95 });
+      // Inferência 100% local — nenhuma imagem sai do dispositivo.
+      const result = await detectLocal(pre.processed.blob, pieceType, (e) => setProgress(e));
 
       const asMarkers: Marker[] = result.detections.map((d) => ({
         id: newMarkerId(),
@@ -174,7 +152,7 @@ function ContagemIA() {
       toast.error(e instanceof Error ? e.message : "Falha na análise");
       setPhase("setup");
     }
-  }, [detect, pieceType, profile.promptHint]);
+  }, [pieceType]);
 
   const capture = async () => {
     const v = videoRef.current;
