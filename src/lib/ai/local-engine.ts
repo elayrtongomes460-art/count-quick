@@ -45,8 +45,11 @@ const onnxBackend: DetectionBackend = {
     try {
       const r = await fetch("/models/detector.onnx", { method: "HEAD" });
       if (!r.ok) return false;
-      // dynamic import — só carrega se o pacote existir
-      await import(/* @vite-ignore */ ("onnxruntime-web" as string)).catch(() => { throw new Error("ort-missing"); });
+      // dynamic import via variável — evita que o Vite tente resolver
+      // "onnxruntime-web" em build/dev enquanto o pacote não estiver instalado.
+      const mod = "onnxruntime-web";
+      const loader = new Function("m", "return import(m)") as (m: string) => Promise<unknown>;
+      await loader(mod).catch(() => { throw new Error("ort-missing"); });
       return true;
     } catch { return false; }
   },
