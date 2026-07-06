@@ -56,6 +56,7 @@
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.575.0",
     "mammoth": "^1.12.0",
+    "onnxruntime-web": "^1.27.0",
     "pdfjs-dist": "^6.0.227",
     "qrcode": "^1.5.4",
     "react": "^19.2.0",
