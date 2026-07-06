@@ -82,23 +82,42 @@ function ContagemIA() {
 
   // ---- camera lifecycle ----
   const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      const track = stream.getVideoTracks()[0];
-      trackRef.current = track;
-      const caps = (track.getCapabilities?.() ?? {}) as MediaTrackCapabilities & { torch?: boolean };
-      setFlashSupported(Boolean(caps.torch));
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível acessar a câmera");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Câmera não suportada neste navegador. Use a Galeria.");
+      return;
     }
+    const attempts: MediaStreamConstraints[] = [
+      { video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+      { video: { facingMode: "environment" }, audio: false },
+      { video: true, audio: false },
+    ];
+    let lastErr: unknown = null;
+    for (const c of attempts) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(c);
+        streamRef.current = stream;
+        const track = stream.getVideoTracks()[0];
+        trackRef.current = track;
+        const caps = (track.getCapabilities?.() ?? {}) as MediaTrackCapabilities & { torch?: boolean };
+        setFlashSupported(Boolean(caps.torch));
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+        }
+        return;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    const err = lastErr as { name?: string; message?: string } | null;
+    const name = err?.name ?? "";
+    const msg =
+      name === "NotAllowedError" ? "Permissão da câmera negada. Libere o acesso nas configurações do navegador."
+      : name === "NotFoundError" ? "Nenhuma câmera encontrada. Use a Galeria."
+      : name === "NotReadableError" ? "Câmera em uso por outro app. Feche-o e tente novamente, ou use a Galeria."
+      : name === "OverconstrainedError" ? "Câmera não atende às configurações. Use a Galeria."
+      : err?.message || "Não foi possível iniciar a câmera. Use a Galeria como alternativa.";
+    toast.error(msg);
   }, []);
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
