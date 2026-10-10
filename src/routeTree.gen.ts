@@ -9,59 +9,49 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedTesteRouteImport } from './routes/_authenticated/teste'
-import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
-import { Route as AuthenticatedNovoInventarioRouteImport } from './routes/_authenticated/novo-inventario'
-import { Route as AuthenticatedItensRouteImport } from './routes/_authenticated/itens'
-import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
-import { Route as AuthenticatedHistoricoCameraRouteImport } from './routes/_authenticated/historico-camera'
-import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
-import { Route as AuthenticatedContagemIaRouteImport } from './routes/_authenticated/contagem-ia'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedContagemCameraRouteImport } from './routes/_authenticated/contagem-camera'
-import { Route as AuthenticatedInventarioIdRouteImport } from './routes/_authenticated/inventario.$id'
+import { Route as AuthenticatedContagemIaRouteImport } from './routes/_authenticated/contagem-ia'
+import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedHistoricoCameraRouteImport } from './routes/_authenticated/historico-camera'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedItensRouteImport } from './routes/_authenticated/itens'
+import { Route as AuthenticatedNovoInventarioRouteImport } from './routes/_authenticated/novo-inventario'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedTesteRouteImport } from './routes/_authenticated/teste'
 import { Route as AuthenticatedContagemIdRouteImport } from './routes/_authenticated/contagem.$id'
+import { Route as AuthenticatedInventarioIdRouteImport } from './routes/_authenticated/inventario.$id'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTesteRoute = AuthenticatedTesteRouteImport.update({
-  id: '/teste',
-  path: '/teste',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedNovoInventarioRoute =
-  AuthenticatedNovoInventarioRouteImport.update({
-    id: '/novo-inventario',
-    path: '/novo-inventario',
+const AuthenticatedContagemCameraRoute =
+  AuthenticatedContagemCameraRouteImport.update({
+    id: '/contagem-camera',
+    path: '/contagem-camera',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedItensRoute = AuthenticatedItensRouteImport.update({
-  id: '/itens',
-  path: '/itens',
+const AuthenticatedContagemIaRoute = AuthenticatedContagemIaRouteImport.update({
+  id: '/contagem-ia',
+  path: '/contagem-ia',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
+const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHistoricoCameraRoute =
@@ -70,33 +60,43 @@ const AuthenticatedHistoricoCameraRoute =
     path: '/historico-camera',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
-  id: '/historico',
-  path: '/historico',
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedContagemIaRoute = AuthenticatedContagemIaRouteImport.update({
-  id: '/contagem-ia',
-  path: '/contagem-ia',
+const AuthenticatedItensRoute = AuthenticatedItensRouteImport.update({
+  id: '/itens',
+  path: '/itens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedContagemCameraRoute =
-  AuthenticatedContagemCameraRouteImport.update({
-    id: '/contagem-camera',
-    path: '/contagem-camera',
+const AuthenticatedNovoInventarioRoute =
+  AuthenticatedNovoInventarioRouteImport.update({
+    id: '/novo-inventario',
+    path: '/novo-inventario',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTesteRoute = AuthenticatedTesteRouteImport.update({
+  id: '/teste',
+  path: '/teste',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedContagemIdRoute = AuthenticatedContagemIdRouteImport.update({
+  id: '/contagem/$id',
+  path: '/contagem/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInventarioIdRoute =
   AuthenticatedInventarioIdRouteImport.update({
     id: '/inventario/$id',
     path: '/inventario/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedContagemIdRoute = AuthenticatedContagemIdRouteImport.update({
-  id: '/contagem/$id',
-  path: '/contagem/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -202,11 +202,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -216,60 +216,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/teste': {
-      id: '/_authenticated/teste'
-      path: '/teste'
-      fullPath: '/teste'
-      preLoaderRoute: typeof AuthenticatedTesteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/perfil': {
-      id: '/_authenticated/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/novo-inventario': {
-      id: '/_authenticated/novo-inventario'
-      path: '/novo-inventario'
-      fullPath: '/novo-inventario'
-      preLoaderRoute: typeof AuthenticatedNovoInventarioRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/itens': {
-      id: '/_authenticated/itens'
-      path: '/itens'
-      fullPath: '/itens'
-      preLoaderRoute: typeof AuthenticatedItensRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/home': {
-      id: '/_authenticated/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AuthenticatedHomeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/historico-camera': {
-      id: '/_authenticated/historico-camera'
-      path: '/historico-camera'
-      fullPath: '/historico-camera'
-      preLoaderRoute: typeof AuthenticatedHistoricoCameraRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/historico': {
-      id: '/_authenticated/historico'
-      path: '/historico'
-      fullPath: '/historico'
-      preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
+    '/_authenticated/contagem-camera': {
+      id: '/_authenticated/contagem-camera'
+      path: '/contagem-camera'
+      fullPath: '/contagem-camera'
+      preLoaderRoute: typeof AuthenticatedContagemCameraRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contagem-ia': {
@@ -279,18 +237,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContagemIaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/contagem-camera': {
-      id: '/_authenticated/contagem-camera'
-      path: '/contagem-camera'
-      fullPath: '/contagem-camera'
-      preLoaderRoute: typeof AuthenticatedContagemCameraRouteImport
+    '/_authenticated/historico': {
+      id: '/_authenticated/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/inventario/$id': {
-      id: '/_authenticated/inventario/$id'
-      path: '/inventario/$id'
-      fullPath: '/inventario/$id'
-      preLoaderRoute: typeof AuthenticatedInventarioIdRouteImport
+    '/_authenticated/historico-camera': {
+      id: '/_authenticated/historico-camera'
+      path: '/historico-camera'
+      fullPath: '/historico-camera'
+      preLoaderRoute: typeof AuthenticatedHistoricoCameraRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/itens': {
+      id: '/_authenticated/itens'
+      path: '/itens'
+      fullPath: '/itens'
+      preLoaderRoute: typeof AuthenticatedItensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/novo-inventario': {
+      id: '/_authenticated/novo-inventario'
+      path: '/novo-inventario'
+      fullPath: '/novo-inventario'
+      preLoaderRoute: typeof AuthenticatedNovoInventarioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/teste': {
+      id: '/_authenticated/teste'
+      path: '/teste'
+      fullPath: '/teste'
+      preLoaderRoute: typeof AuthenticatedTesteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contagem/$id': {
@@ -298,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/contagem/$id'
       fullPath: '/contagem/$id'
       preLoaderRoute: typeof AuthenticatedContagemIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventario/$id': {
+      id: '/_authenticated/inventario/$id'
+      path: '/inventario/$id'
+      fullPath: '/inventario/$id'
+      preLoaderRoute: typeof AuthenticatedInventarioIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
