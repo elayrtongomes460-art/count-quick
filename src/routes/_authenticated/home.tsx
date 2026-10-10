@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HomeCard } from "@/components/AppShell";
-import { Boxes, Camera, ClipboardList, History, PackageSearch, Scale, User } from "lucide-react";
+import { Boxes, ClipboardList, History, PackageSearch, Scale, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{"title": "Início — Inventário"}, {"name": "description", "content": "Inventários, cadastro de produtos e contagem de materiais."}, {"property": "og:title", "content": "Início — Inventário"}, {"property": "og:description", "content": "Inventários, cadastro de produtos e contagem de materiais."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
@@ -47,13 +47,6 @@ function Home() {
             label="Cadastro de Itens"
             desc="Cadastrar, editar e pesquisar"
             tone="primary"
-          />
-          <HomeCard
-            to="/historico-camera"
-            icon={Camera}
-            label="Histórico — Câmera"
-            desc="Contagens por câmera salvas"
-            tone="muted"
           />
           <HomeCard
             to="/historico"
