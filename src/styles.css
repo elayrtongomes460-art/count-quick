@@ -102,7 +102,9 @@
 
 @media (max-height: 760px) {
   .scale-workspace { gap: 0; }
-  .scale-workspace > section { row-gap: 4px; }
+  .scale-workspace > section { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 8px; }
+  .scale-workspace > section > :not(label) { grid-column: 1 / -1; }
+  .scale-workspace > section > label { min-width: 0; margin-top: 0; }
   .scale-workspace label { font-size: 12px; }
   .scale-workspace label > span { display: block; line-height: 16px; }
   .scale-workspace label > :not(:first-child) { margin-top: 2px; }
