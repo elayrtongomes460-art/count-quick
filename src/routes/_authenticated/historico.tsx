@@ -49,7 +49,9 @@ function Historico() {
     try {
       const { data, error } = await supabase.from("inventario_itens").select("*").eq("inventario_id", inv.id).order("produto");
       if (error) throw error;
-      await gerarPdfInventario(inv, (data ?? []) as never);
+      const header = await supabase.from('inventarios').select('*').eq('id', inv.id).single();
+      if (header.error) throw header.error;
+      await gerarPdfInventario(header.data, data ?? []);
       toast.success("PDF gerado.");
     } catch (err) {
       toast.error((err as Error).message);

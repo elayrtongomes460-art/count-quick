@@ -1,5 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useServerFn } from '@tanstack/react-start';
 import { useEffect, useMemo, useState } from 'react';
 import { Scale, Save, RotateCcw, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,8 +11,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { weightCountingOptions } from '@/lib/weight-counting.queries';
 import { countByWeight, parseWeight } from '@/lib/weight-counting';
 import { brl } from '@/lib/format';
+import { WeightInventoryPanel } from '@/components/WeightInventoryPanel';
+import { weightInventoriesOptions, weightInventoryOptions } from '@/lib/weight-inventory.queries';
+import { saveWeightInventoryItem } from '@/lib/weight-inventory.functions';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
 export const Route = createFileRoute('/_authenticated/teste')({
+  validateSearch: (search: Record<string, unknown>): { inventario?: string } => ({ inventario: typeof search.inventario === 'string' ? search.inventario : undefined }),
   head: () => ({ meta: [
     { title: 'Balança — Contagem por Peso | Inventário' },
     { name: 'description', content: 'Contagem de parafusos, porcas e arruelas pela balança, com referência de peso por produto.' },
@@ -20,7 +26,10 @@ export const Route = createFileRoute('/_authenticated/teste')({
     { property: 'og:type', content: 'website' },
     { name: 'twitter:card', content: 'summary' },
   ] }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(weightCountingOptions),
+  loader: async ({ context }) => {
+    const [data] = await Promise.all([context.queryClient.ensureQueryData(weightCountingOptions), context.queryClient.ensureQueryData(weightInventoriesOptions)]);
+    return data;
+  },
   component: Teste,
   errorComponent: ({ error, reset }) => <AppShell title="Balança"><p role="alert" className="text-destructive mb-4">{error instanceof Error ? error.message : 'Não foi possível carregar a contagem.'}</p><Button onClick={reset}>Tentar novamente</Button></AppShell>,
 });
@@ -31,6 +40,12 @@ const numberFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 4 }
 function Teste() {
   const { data } = useSuspenseQuery(weightCountingOptions);
   const queryClient = useQueryClient();
+  const { inventario: inventoryId = '' } = Route.useSearch();
+  const navigate = useNavigate();
+  const inventory = useQuery(weightInventoryOptions(inventoryId));
+  const saveCount = useServerFn(saveWeightInventoryItem);
+  const [savingCount, setSavingCount] = useState(false);
+  const [replaceOpen, setReplaceOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [itemId, setItemId] = useState('');
   const [tipo, setTipo] = useState('parafuso');
@@ -45,9 +60,9 @@ function Teste() {
   const item = data.items.find(i => i.id === itemId);
   const config = data.weights.find(w => w.item_id === itemId);
   const filtered = useMemo(() => {
-    const term = search.trim().toLocaleLowerCase();
+    const term = view === 'cadastro' ? search.trim().toLocaleLowerCase() : '';
     return data.items.filter(i => i.id === itemId || `${i.produto} ${i.part_number} ${i.designacao}`.toLocaleLowerCase().includes(term));
-  }, [data.items, search, itemId]);
+  }, [data.items, search, itemId, view]);
 
   useEffect(() => {
     setTipo(config?.tipo ?? 'parafuso');
@@ -80,6 +95,20 @@ function Teste() {
     finally { setSaving(false); }
   };
 
+  const addCount = async (replace = false) => {
+    if (!item || !result || dirty || !inventoryId || inventory.data?.inventory.status !== 'Em andamento' || savingCount) return;
+    setSavingCount(true);
+    try {
+      const saved = await saveCount({ data: { inventoryId, itemId: item.id, grossG, replace } });
+      if (saved.needsConfirmation) { setReplaceOpen(true); return; }
+      setReplaceOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ['weight-inventory', inventoryId] });
+      toast.success(`${item.produto}: ${numberFormat.format(saved.quantity)} peças salvas no inventário e no histórico.`);
+      setScaleWeight('');
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Não foi possível salvar a pesagem.'); }
+    finally { setSavingCount(false); }
+  };
+
   return <AppShell title="Balança" compact>
     <div className="flex items-center gap-2 mb-2"><Scale className="size-6 shrink-0 text-primary" /><div className="min-w-0"><h2 className="text-base font-semibold">Contagem por peso</h2><p className="text-xs text-muted-foreground">Parafusos · Porcas · Arruelas</p></div></div>
     <Tabs value={view} onValueChange={setView} className="scale-workspace">
@@ -87,12 +116,13 @@ function Teste() {
       <TabsTrigger value="contagem" className="h-10 gap-2"><Scale className="size-4" />Contagem</TabsTrigger>
       <TabsTrigger value="cadastro" className="h-10 gap-2"><ClipboardList className="size-4" />Cadastro</TabsTrigger>
     </TabsList>
+    {view === 'contagem' && <WeightInventoryPanel inventoryId={inventoryId} onChange={id => { setScaleWeight(''); navigate({ to: '/teste', search: { inventario: id || undefined }, replace: true }); }} />}
     <section className="space-y-2">
-      <label className="block space-y-1.5"><span className="text-sm font-medium">Buscar código ou descrição</span><input className={inputClass} value={search} onChange={e => setSearch(e.target.value)} placeholder="Código, part number ou descrição" /></label>
+      {view === 'cadastro' && <label className="block space-y-1.5"><span className="text-sm font-medium">Buscar código ou descrição</span><input className={inputClass} value={search} onChange={e => setSearch(e.target.value)} placeholder="Código, part number ou descrição" /></label>}
       <label className="block space-y-1.5"><span className="text-sm font-medium">Código do produto</span><select className={inputClass} value={itemId} onChange={e => setItemId(e.target.value)}><option value="">Selecionar produto</option>{filtered.map(i => <option key={i.id} value={i.id}>{i.produto} — {i.designacao}</option>)}</select></label>
       {!data.items.length && <p className="text-sm text-muted-foreground">Nenhum produto cadastrado.</p>}
-      {search && !filtered.length && <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>}
-      {item && <dl aria-label="Informações do produto" className="border-y border-border py-2 space-y-1 text-xs break-words">
+      {view === 'cadastro' && search && !filtered.length && <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>}
+      {view === 'cadastro' && item && <dl aria-label="Informações do produto" className="border-y border-border py-2 space-y-1 text-xs break-words">
         <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Part Number</dt><dd className="text-right font-medium">{item.part_number || '—'}</dd></div>
         <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Designação</dt><dd className="text-right font-medium">{item.designacao || '—'}</dd></div>
         <div className="grid grid-cols-3 gap-2">
@@ -124,12 +154,15 @@ function Teste() {
           <div className="grid grid-cols-[minmax(0,1fr)_100px] gap-3"><label className="block space-y-1.5"><span className="text-sm font-medium">Peso indicado na balança</span><input className={inputClass} inputMode="decimal" value={scaleWeight} onChange={e => setScaleWeight(e.target.value)} placeholder="0,000" /></label><label className="block space-y-1.5"><span className="text-sm font-medium">Unidade</span><select className={inputClass} value={scaleUnit} onChange={e => setScaleUnit(e.target.value)}><option value="g">g</option><option value="kg">kg</option></select></label></div>
           {scaleWeight && !result && <p role="alert" className="text-sm text-destructive">Peso inválido ou menor que a tara do recipiente.</p>}
           <div aria-live="polite" aria-atomic="true" className="border-y border-border py-2 text-center"><p className="text-xs text-muted-foreground">Quantidade estimada</p><p className="text-4xl font-bold text-primary tabular-nums py-1">{result && !dirty ? numberFormat.format(result.quantity) : '—'} <span className="text-sm font-medium">peças</span></p>{result && !dirty && <p className="text-xs text-muted-foreground">Peso líquido: {numberFormat.format(result.netG)} g</p>}</div>
-          <Button variant="outline" className="h-11 w-full" onClick={() => setScaleWeight('')}><RotateCcw />Nova pesagem</Button>
+          <div className="grid grid-cols-[44px_minmax(0,1fr)] gap-2"><Button variant="outline" size="icon" className="h-11 w-11" disabled={savingCount} onClick={() => setScaleWeight('')} aria-label="Nova pesagem" title="Nova pesagem"><RotateCcw /></Button><Button className="h-11 min-w-0" disabled={!result || Boolean(dirty) || savingCount || inventory.data?.inventory.status !== 'Em andamento'} onClick={() => void addCount()}><Save />{savingCount ? 'Salvando…' : 'Adicionar à contagem'}</Button></div>
           <p className="text-[11px] leading-tight text-muted-foreground">Estimativa sujeita à variação das peças e precisão da balança. Use tara 0 g se a balança já estiver tarada.</p>
         </>}
       </section>
       </TabsContent>
     </>}
     </Tabs>
+    <Dialog open={replaceOpen} onOpenChange={open => { if (!savingCount) setReplaceOpen(open); }}>
+      <DialogContent className="w-[calc(100%-24px)] rounded-lg"><DialogTitle>Produto já contado</DialogTitle><DialogDescription>Substituir a quantidade já salva por {result ? numberFormat.format(result.quantity) : '—'} peças? A nova pesagem não será somada à anterior.</DialogDescription><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={savingCount} onClick={() => setReplaceOpen(false)}>Cancelar</Button><Button disabled={savingCount} onClick={() => void addCount(true)}>{savingCount ? 'Salvando…' : 'Substituir'}</Button></div></DialogContent>
+    </Dialog>
   </AppShell>;
 }
