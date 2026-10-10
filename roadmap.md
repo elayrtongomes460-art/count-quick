@@ -1,4 +1,6 @@
 # Tasks
+- [x] Atualizar dependências com correções disponíveis, verificar lockfile, executar testes e confirmar compilação automática.
+- [ ] Corrigir sprintf-js em @tanstack/react-start e mammoth; bloqueado: registro só oferece até 1.1.3, mas a correção exige versão superior.
 - [x] Gerar APK Android conectado ao aplicativo publicado e verificar assinatura e estrutura; teste no aparelho físico não disponível neste ambiente.
 - [x] Adicionar Balança com código, descrição e referência de peso por produto.
 - [x] Calcular quantidade pelo peso com unidades e tara do recipiente.
