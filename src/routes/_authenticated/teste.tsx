@@ -12,16 +12,16 @@ import { countByWeight, parseWeight } from '@/lib/weight-counting';
 
 export const Route = createFileRoute('/_authenticated/teste')({
   head: () => ({ meta: [
-    { title: 'Teste — Contagem por Peso | Inventário' },
+    { title: 'Balança — Contagem por Peso | Inventário' },
     { name: 'description', content: 'Contagem de parafusos, porcas e arruelas pela balança, com referência de peso por produto.' },
-    { property: 'og:title', content: 'Teste — Contagem por Peso | Inventário' },
+    { property: 'og:title', content: 'Balança — Contagem por Peso | Inventário' },
     { property: 'og:description', content: 'Quantidade estimada de ferragens a partir do peso e da tara cadastrada.' },
     { property: 'og:type', content: 'website' },
     { name: 'twitter:card', content: 'summary' },
   ] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(weightCountingOptions),
   component: Teste,
-  errorComponent: ({ error, reset }) => <AppShell title="Teste"><p role="alert" className="text-destructive mb-4">{error instanceof Error ? error.message : 'Não foi possível carregar a contagem.'}</p><Button onClick={reset}>Tentar novamente</Button></AppShell>,
+  errorComponent: ({ error, reset }) => <AppShell title="Balança"><p role="alert" className="text-destructive mb-4">{error instanceof Error ? error.message : 'Não foi possível carregar a contagem.'}</p><Button onClick={reset}>Tentar novamente</Button></AppShell>,
 });
 
 const inputClass = 'w-full min-h-12 rounded-md border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -79,7 +79,7 @@ function Teste() {
     finally { setSaving(false); }
   };
 
-  return <AppShell title="Teste">
+  return <AppShell title="Balança">
     <div className="flex items-center gap-3 mb-6"><Scale className="size-8 text-primary" /><div><h2 className="text-xl font-semibold">Contagem por peso</h2><p className="text-sm text-muted-foreground">Parafusos · Porcas · Arruelas</p></div></div>
     <Tabs value={view} onValueChange={setView}>
     <TabsList aria-label="Contagem por peso" className="grid grid-cols-2 w-full h-12 mb-5 rounded-md">
