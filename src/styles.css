@@ -113,7 +113,7 @@
   .scale-workspace [role="tabpanel"] { margin-top: 0; }
   .scale-workspace [role="tabpanel"] > section { padding-block: 4px; }
   .scale-workspace [role="tabpanel"] > section > :not(:first-child) { margin-top: 4px; }
-  .scale-workspace [aria-live="polite"] { padding-block: 4px; }
+  .scale-workspace [aria-live="polite"] { padding-block: 2px; }
   .scale-workspace [aria-live="polite"] > p { padding-block: 0; }
   .scale-workspace [role="tabpanel"] > section > p:last-child { font-size: 10px; }
 }
