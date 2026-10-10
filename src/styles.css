@@ -100,7 +100,7 @@
   input, button, select, textarea { font-size: 16px; } /* avoid iOS zoom */
 }
 
-@media (max-height: 900px) {
+@media (max-height: 760px) {
   .scale-workspace { gap: 0; }
   .scale-workspace > section { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 8px; }
   .scale-workspace > section > :not(label) { grid-column: 1 / -1; }

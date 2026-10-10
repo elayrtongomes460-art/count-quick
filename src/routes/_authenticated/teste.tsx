@@ -60,9 +60,9 @@ function Teste() {
   const item = data.items.find(i => i.id === itemId);
   const config = data.weights.find(w => w.item_id === itemId);
   const filtered = useMemo(() => {
-    const term = search.trim().toLocaleLowerCase();
+    const term = view === 'cadastro' ? search.trim().toLocaleLowerCase() : '';
     return data.items.filter(i => i.id === itemId || `${i.produto} ${i.part_number} ${i.designacao}`.toLocaleLowerCase().includes(term));
-  }, [data.items, search, itemId]);
+  }, [data.items, search, itemId, view]);
 
   useEffect(() => {
     setTipo(config?.tipo ?? 'parafuso');
@@ -118,11 +118,11 @@ function Teste() {
     </TabsList>
     {view === 'contagem' && <WeightInventoryPanel inventoryId={inventoryId} onChange={id => { setScaleWeight(''); navigate({ to: '/teste', search: { inventario: id || undefined }, replace: true }); }} />}
     <section className="space-y-2">
-      <label className="block space-y-1.5"><span className="text-sm font-medium">Buscar código ou descrição</span><input className={inputClass} value={search} onChange={e => setSearch(e.target.value)} placeholder="Código, part number ou descrição" /></label>
+      {view === 'cadastro' && <label className="block space-y-1.5"><span className="text-sm font-medium">Buscar código ou descrição</span><input className={inputClass} value={search} onChange={e => setSearch(e.target.value)} placeholder="Código, part number ou descrição" /></label>}
       <label className="block space-y-1.5"><span className="text-sm font-medium">Código do produto</span><select className={inputClass} value={itemId} onChange={e => setItemId(e.target.value)}><option value="">Selecionar produto</option>{filtered.map(i => <option key={i.id} value={i.id}>{i.produto} — {i.designacao}</option>)}</select></label>
       {!data.items.length && <p className="text-sm text-muted-foreground">Nenhum produto cadastrado.</p>}
-      {search && !filtered.length && <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>}
-      {item && <dl aria-label="Informações do produto" className="border-y border-border py-2 space-y-1 text-xs break-words">
+      {view === 'cadastro' && search && !filtered.length && <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>}
+      {view === 'cadastro' && item && <dl aria-label="Informações do produto" className="border-y border-border py-2 space-y-1 text-xs break-words">
         <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Part Number</dt><dd className="text-right font-medium">{item.part_number || '—'}</dd></div>
         <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Designação</dt><dd className="text-right font-medium">{item.designacao || '—'}</dd></div>
         <div className="grid grid-cols-3 gap-2">
