@@ -25,7 +25,7 @@ export const Route = createFileRoute('/_authenticated/teste')({
   errorComponent: ({ error, reset }) => <AppShell title="Balança"><p role="alert" className="text-destructive mb-4">{error instanceof Error ? error.message : 'Não foi possível carregar a contagem.'}</p><Button onClick={reset}>Tentar novamente</Button></AppShell>,
 });
 
-const inputClass = 'w-full min-h-12 rounded-md border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const inputClass = 'w-full h-11 min-w-0 rounded-md border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 const numberFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 4 });
 
 function Teste() {
@@ -80,19 +80,19 @@ function Teste() {
     finally { setSaving(false); }
   };
 
-  return <AppShell title="Balança">
-    <div className="flex items-center gap-3 mb-6"><Scale className="size-8 text-primary" /><div><h2 className="text-xl font-semibold">Contagem por peso</h2><p className="text-sm text-muted-foreground">Parafusos · Porcas · Arruelas</p></div></div>
-    <Tabs value={view} onValueChange={setView}>
-    <TabsList aria-label="Contagem por peso" className="grid grid-cols-2 w-full h-12 mb-5 rounded-md">
+  return <AppShell title="Balança" compact>
+    <div className="flex items-center gap-2 mb-2"><Scale className="size-6 shrink-0 text-primary" /><div className="min-w-0"><h2 className="text-base font-semibold">Contagem por peso</h2><p className="text-xs text-muted-foreground">Parafusos · Porcas · Arruelas</p></div></div>
+    <Tabs value={view} onValueChange={setView} className="scale-workspace">
+    <TabsList aria-label="Contagem por peso" className="grid grid-cols-2 w-full h-12 mb-2 rounded-md">
       <TabsTrigger value="contagem" className="h-10 gap-2"><Scale className="size-4" />Contagem</TabsTrigger>
       <TabsTrigger value="cadastro" className="h-10 gap-2"><ClipboardList className="size-4" />Cadastro</TabsTrigger>
     </TabsList>
-    <section className="space-y-3 pb-6 border-b border-border">
+    <section className="space-y-2">
       <label className="block space-y-1.5"><span className="text-sm font-medium">Buscar código ou descrição</span><input className={inputClass} value={search} onChange={e => setSearch(e.target.value)} placeholder="Código, part number ou descrição" /></label>
       <label className="block space-y-1.5"><span className="text-sm font-medium">Código do produto</span><select className={inputClass} value={itemId} onChange={e => setItemId(e.target.value)}><option value="">Selecionar produto</option>{filtered.map(i => <option key={i.id} value={i.id}>{i.produto} — {i.designacao}</option>)}</select></label>
       {!data.items.length && <p className="text-sm text-muted-foreground">Nenhum produto cadastrado.</p>}
       {search && !filtered.length && <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>}
-      {item && <dl aria-label="Informações do produto" className="border-y border-border py-3 space-y-3 text-sm break-words">
+      {item && <dl aria-label="Informações do produto" className="border-y border-border py-2 space-y-1 text-xs break-words">
         <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Part Number</dt><dd className="text-right font-medium">{item.part_number || '—'}</dd></div>
         <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Designação</dt><dd className="text-right font-medium">{item.designacao || '—'}</dd></div>
         <div className="grid grid-cols-3 gap-2">
@@ -116,16 +116,16 @@ function Teste() {
       </form>
       </TabsContent>
       <TabsContent value="contagem">
-      <section className="py-6 space-y-4">
+       <section className="py-2 space-y-2">
         <h3 className="font-semibold">Pesagem</h3>
         {!config ? <div className="space-y-3"><p className="text-sm text-muted-foreground">Tara ainda não cadastrada para este produto.</p><Button variant="outline" className="h-12 w-full" onClick={() => setView('cadastro')}><ClipboardList className="size-4" />Cadastrar tara</Button></div> : <>
           <p className="text-sm text-muted-foreground">Peso por peça: {numberFormat.format(Number(config.peso_unitario_g))} g · Tara: {numberFormat.format(Number(config.tara_recipiente_g))} g</p>
           {dirty && <p role="status" className="text-sm text-destructive">Salve as alterações antes da pesagem.</p>}
           <div className="grid grid-cols-[minmax(0,1fr)_100px] gap-3"><label className="block space-y-1.5"><span className="text-sm font-medium">Peso indicado na balança</span><input className={inputClass} inputMode="decimal" value={scaleWeight} onChange={e => setScaleWeight(e.target.value)} placeholder="0,000" /></label><label className="block space-y-1.5"><span className="text-sm font-medium">Unidade</span><select className={inputClass} value={scaleUnit} onChange={e => setScaleUnit(e.target.value)}><option value="g">g</option><option value="kg">kg</option></select></label></div>
           {scaleWeight && !result && <p role="alert" className="text-sm text-destructive">Peso inválido ou menor que a tara do recipiente.</p>}
-          <div aria-live="polite" aria-atomic="true" className="border-y border-border py-6 text-center"><p className="text-sm text-muted-foreground">Quantidade estimada</p><p className="text-5xl font-bold text-primary tabular-nums py-3">{result && !dirty ? numberFormat.format(result.quantity) : '—'}</p><p className="text-sm font-medium">peças</p>{result && !dirty && <p className="text-sm text-muted-foreground mt-3">Peso líquido: {numberFormat.format(result.netG)} g</p>}</div>
-          <p className="text-xs text-muted-foreground">Estimativa arredondada; sujeita à variação do peso das peças e à precisão da balança. Tara do recipiente = 0 g quando a balança já estiver tarada.</p>
-          <Button variant="outline" className="h-12 w-full" onClick={() => setScaleWeight('')}><RotateCcw />Nova pesagem</Button>
+          <div aria-live="polite" aria-atomic="true" className="border-y border-border py-2 text-center"><p className="text-xs text-muted-foreground">Quantidade estimada</p><p className="text-4xl font-bold text-primary tabular-nums py-1">{result && !dirty ? numberFormat.format(result.quantity) : '—'} <span className="text-sm font-medium">peças</span></p>{result && !dirty && <p className="text-xs text-muted-foreground">Peso líquido: {numberFormat.format(result.netG)} g</p>}</div>
+          <Button variant="outline" className="h-11 w-full" onClick={() => setScaleWeight('')}><RotateCcw />Nova pesagem</Button>
+          <p className="text-[11px] leading-tight text-muted-foreground">Estimativa sujeita à variação das peças e precisão da balança. Use tara 0 g se a balança já estiver tarada.</p>
         </>}
       </section>
       </TabsContent>
