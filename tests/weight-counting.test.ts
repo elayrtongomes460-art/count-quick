@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { countByWeight, parseWeight } from './weight-counting';
+import { countByWeight, parseWeight } from '../src/lib/weight-counting';
 
 describe('contagem por peso', () => {
   test('desconta tara e divide pelo peso de uma peça', () => {
