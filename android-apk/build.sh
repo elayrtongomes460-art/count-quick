@@ -13,7 +13,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 mkdir -p "$WORK/classes" "$WORK/dex"
 "$TOOLS/aapt2" compile --dir "$ROOT/res" -o "$WORK/resources.zip"
 "$TOOLS/aapt2" link -I "$PLATFORM" --manifest "$ROOT/AndroidManifest.xml" -o "$WORK/app.apk" "$WORK/resources.zip"
-javac --release 8 -classpath "$PLATFORM" -d "$WORK/classes" "$ROOT/src/app/countquick/inventory/MainActivity.java"
+javac -encoding UTF-8 --release 8 -classpath "$PLATFORM" -d "$WORK/classes" "$ROOT/src/app/countquick/inventory/MainActivity.java"
 jar cf "$WORK/classes.jar" -C "$WORK/classes" .
 "$TOOLS/d8" --lib "$PLATFORM" --min-api 26 --output "$WORK/dex" "$WORK/classes.jar"
 python3 - "$WORK/app.apk" "$WORK/dex/classes.dex" <<'PY'
