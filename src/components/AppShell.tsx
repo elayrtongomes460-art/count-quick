@@ -7,11 +7,13 @@ export function AppShell({
   children,
   back = true,
   action,
+  compact = false,
 }: {
   title: string;
   children: ReactNode;
   back?: boolean;
   action?: ReactNode;
+  compact?: boolean;
 }) {
   const router = useRouter();
   return (
@@ -33,7 +35,7 @@ export function AppShell({
           {action}
         </div>
       </header>
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-4 pb-24">{children}</main>
+      <main className={`flex-1 mx-auto w-full max-w-3xl px-4 ${compact ? 'py-2 pb-3' : 'py-4 pb-24'}`}>{children}</main>
     </div>
   );
 }

@@ -11,3 +11,4 @@
 
 - Keep weight-based counting in a separate protected route with product-linked, owner-scoped calibration records; this preserves existing inventory quantities and workflows.
 - Store all calibration weights in grams and convert scale input before the pure counting calculation; this prevents unit mismatches.
+- Use AppShell's opt-in compact spacing for single-screen tools; this keeps other routes' established spacing unchanged.
