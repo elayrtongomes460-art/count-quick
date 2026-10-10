@@ -16,3 +16,4 @@
 - Keep the selected weight inventory in route search and its list in TanStack Query; this supports reloads and resuming counts from inventory details.
 - Keep Android packaging in android-apk as a thin HTTPS WebView client of the published app; this preserves TanStack server functions and existing inventory workflows without duplicating them.
 - Install SheetJS from its official versioned distribution URL; the npm xlsx release does not contain the required security fixes.
+- Use the shared CSV serializer for item and inventory exports; neutralize formula-like text at export time while preserving numeric quantities and stored catalog data.

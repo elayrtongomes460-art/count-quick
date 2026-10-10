@@ -6,6 +6,7 @@ import { brl, dateBR, dateOnly, num } from "@/lib/format";
 import { Camera, Download, FileDown, Play, Scale } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { gerarPdfInventario } from "@/lib/pdf-inventario";
+import { serializeCsv } from "@/lib/csv";
 
 export const Route = createFileRoute("/_authenticated/inventario/$id")({
   head: () => ({ meta: [{"title": "Detalhes do Inventário"}, {"name": "description", "content": "Itens contados, quantidades em estoque e divergências do inventário."}, {"property": "og:title", "content": "Detalhes do Inventário"}, {"property": "og:description", "content": "Itens contados, quantidades em estoque e divergências do inventário."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
@@ -63,7 +64,7 @@ function Detalhes() {
       [],
     ];
     const all = [...meta, header, ...rows];
-    const csv = all.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(";")).join("\n");
+    const csv = serializeCsv(all);
     const blob = new Blob(["\ufeff"+csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

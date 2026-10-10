@@ -6,6 +6,7 @@ import { brl, num } from "@/lib/format";
 import { Pencil, Plus, Search, Trash2, X, Download, Upload, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import { parseItensFile } from "@/lib/import-itens";
+import { serializeCsv } from "@/lib/csv";
 
 export const Route = createFileRoute("/_authenticated/itens")({
   head: () => ({ meta: [{"title": "Cadastro de Itens — Inventário"}, {"name": "description", "content": "Cadastro e consulta de códigos, descrições, quantidades e preços de produtos."}, {"property": "og:title", "content": "Cadastro de Itens — Inventário"}, {"property": "og:description", "content": "Cadastro e consulta de códigos, descrições, quantidades e preços de produtos."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
@@ -75,7 +76,7 @@ function ItensPage() {
   const exportCsv = () => {
     const header = ["Produto","Part_Number","Designacao","Quantidade_UN","Unidade_UN","Localizacao","Preco_medio_pond"];
     const rows = itens.map(i => [i.produto, i.part_number ?? "", i.designacao, i.quantidade_un, i.unidade_un, i.localizacao, i.preco_medio_pond]);
-    const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(";")).join("\n");
+    const csv = serializeCsv([header, ...rows]);
     const blob = new Blob(["\ufeff"+csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
