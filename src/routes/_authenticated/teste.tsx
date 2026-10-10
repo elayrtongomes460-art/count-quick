@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { weightCountingOptions } from '@/lib/weight-counting.queries';
 import { countByWeight, parseWeight } from '@/lib/weight-counting';
+import { brl } from '@/lib/format';
 
 export const Route = createFileRoute('/_authenticated/teste')({
   head: () => ({ meta: [
@@ -91,7 +92,15 @@ function Teste() {
       <label className="block space-y-1.5"><span className="text-sm font-medium">Código do produto</span><select className={inputClass} value={itemId} onChange={e => setItemId(e.target.value)}><option value="">Selecionar produto</option>{filtered.map(i => <option key={i.id} value={i.id}>{i.produto} — {i.designacao}</option>)}</select></label>
       {!data.items.length && <p className="text-sm text-muted-foreground">Nenhum produto cadastrado.</p>}
       {search && !filtered.length && <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>}
-      {item && <dl className="bg-muted rounded-md p-3 space-y-1 break-words"><dt className="text-xs text-muted-foreground">Descrição</dt><dd className="font-medium">{item.designacao}</dd>{item.part_number && <><dt className="text-xs text-muted-foreground pt-1">Part number</dt><dd>{item.part_number}</dd></>}</dl>}
+      {item && <dl aria-label="Informações do produto" className="border-y border-border py-3 space-y-3 text-sm break-words">
+        <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Part Number</dt><dd className="text-right font-medium">{item.part_number || '—'}</dd></div>
+        <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Designação</dt><dd className="text-right font-medium">{item.designacao || '—'}</dd></div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="min-w-0 rounded-md bg-muted p-2"><dt className="text-[10px] uppercase text-muted-foreground">Qtd sistema</dt><dd className="font-medium mt-1 tabular-nums">{numberFormat.format(Number(item.quantidade_un))} {item.unidade_un || 'UN'}</dd></div>
+          <div className="min-w-0 rounded-md bg-muted p-2"><dt className="text-[10px] uppercase text-muted-foreground">Localização</dt><dd className="font-medium mt-1">{item.localizacao || '—'}</dd></div>
+          <div className="min-w-0 rounded-md bg-muted p-2"><dt className="text-[10px] uppercase text-muted-foreground">Preço médio</dt><dd className="font-medium mt-1 tabular-nums">{brl(item.preco_medio_pond)}</dd></div>
+        </div>
+      </dl>}
     </section>
     {item && <>
       <TabsContent value="cadastro">

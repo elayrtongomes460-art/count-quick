@@ -9,7 +9,7 @@ export const weightCountingOptions = queryOptions({
     const userId = auth.user.id;
     const items = [];
     for (let offset = 0; ; offset += 1000) {
-      const { data, error } = await supabase.from('itens').select('id, produto, part_number, designacao').order('produto').order('id').range(offset, offset + 999);
+      const { data, error } = await supabase.from('itens').select('id, produto, part_number, designacao, quantidade_un, unidade_un, localizacao, preco_medio_pond').order('produto').order('id').range(offset, offset + 999);
       if (error) throw new Error(error.message);
       items.push(...data);
       if (data.length < 1000) break;
