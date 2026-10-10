@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_authenticated/teste')({
   ] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(weightCountingOptions),
   component: Teste,
-  errorComponent: ({ error, reset }) => <AppShell title="Teste"><p role="alert" className="text-destructive mb-4">{error.message}</p><Button onClick={reset}>Tentar novamente</Button></AppShell>,
+  errorComponent: ({ error, reset }) => <AppShell title="Teste"><p role="alert" className="text-destructive mb-4">{error instanceof Error ? error.message : 'Não foi possível carregar a contagem.'}</p><Button onClick={reset}>Tentar novamente</Button></AppShell>,
 });
 
 const inputClass = 'w-full min-h-12 rounded-md border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
