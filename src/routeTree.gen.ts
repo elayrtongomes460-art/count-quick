@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedTesteRouteImport } from './routes/_authenticated/teste'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedNovoInventarioRouteImport } from './routes/_authenticated/novo-inventario'
 import { Route as AuthenticatedItensRouteImport } from './routes/_authenticated/itens'
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTesteRoute = AuthenticatedTesteRouteImport.update({
+  id: '/teste',
+  path: '/teste',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   id: '/perfil',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/itens': typeof AuthenticatedItensRoute
   '/novo-inventario': typeof AuthenticatedNovoInventarioRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/teste': typeof AuthenticatedTesteRoute
   '/contagem/$id': typeof AuthenticatedContagemIdRoute
   '/inventario/$id': typeof AuthenticatedInventarioIdRoute
 }
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/itens': typeof AuthenticatedItensRoute
   '/novo-inventario': typeof AuthenticatedNovoInventarioRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/teste': typeof AuthenticatedTesteRoute
   '/contagem/$id': typeof AuthenticatedContagemIdRoute
   '/inventario/$id': typeof AuthenticatedInventarioIdRoute
 }
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/_authenticated/itens': typeof AuthenticatedItensRoute
   '/_authenticated/novo-inventario': typeof AuthenticatedNovoInventarioRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/teste': typeof AuthenticatedTesteRoute
   '/_authenticated/contagem/$id': typeof AuthenticatedContagemIdRoute
   '/_authenticated/inventario/$id': typeof AuthenticatedInventarioIdRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/itens'
     | '/novo-inventario'
     | '/perfil'
+    | '/teste'
     | '/contagem/$id'
     | '/inventario/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/itens'
     | '/novo-inventario'
     | '/perfil'
+    | '/teste'
     | '/contagem/$id'
     | '/inventario/$id'
   id:
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/_authenticated/itens'
     | '/_authenticated/novo-inventario'
     | '/_authenticated/perfil'
+    | '/_authenticated/teste'
     | '/_authenticated/contagem/$id'
     | '/_authenticated/inventario/$id'
   fileRoutesById: FileRoutesById
@@ -210,6 +222,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/teste': {
+      id: '/_authenticated/teste'
+      path: '/teste'
+      fullPath: '/teste'
+      preLoaderRoute: typeof AuthenticatedTesteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/perfil': {
       id: '/_authenticated/perfil'
@@ -293,6 +312,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedItensRoute: typeof AuthenticatedItensRoute
   AuthenticatedNovoInventarioRoute: typeof AuthenticatedNovoInventarioRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedTesteRoute: typeof AuthenticatedTesteRoute
   AuthenticatedContagemIdRoute: typeof AuthenticatedContagemIdRoute
   AuthenticatedInventarioIdRoute: typeof AuthenticatedInventarioIdRoute
 }
@@ -306,6 +326,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedItensRoute: AuthenticatedItensRoute,
   AuthenticatedNovoInventarioRoute: AuthenticatedNovoInventarioRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedTesteRoute: AuthenticatedTesteRoute,
   AuthenticatedContagemIdRoute: AuthenticatedContagemIdRoute,
   AuthenticatedInventarioIdRoute: AuthenticatedInventarioIdRoute,
 }
@@ -321,3 +342,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

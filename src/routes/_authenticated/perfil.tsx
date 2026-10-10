@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
+  head: () => ({ meta: [{"title": "Perfil — Inventário"}, {"name": "description", "content": "Informações da conta e encerramento de sessão."}, {"property": "og:title", "content": "Perfil — Inventário"}, {"property": "og:description", "content": "Informações da conta e encerramento de sessão."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Perfil,
 });
 

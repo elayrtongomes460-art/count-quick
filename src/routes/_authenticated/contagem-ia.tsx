@@ -19,6 +19,7 @@ import {
 type Search = { inventario?: string; produto?: string };
 
 export const Route = createFileRoute("/_authenticated/contagem-ia")({
+  head: () => ({ meta: [{"title": "Contagem por IA — Inventário"}, {"name": "description", "content": "Contagem local de materiais com revisão dos marcadores e quantidades."}, {"property": "og:title", "content": "Contagem por IA — Inventário"}, {"property": "og:description", "content": "Contagem local de materiais com revisão dos marcadores e quantidades."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ContagemIA,
   validateSearch: (s: Record<string, unknown>): Search => ({
     inventario: typeof s.inventario === "string" ? s.inventario : undefined,

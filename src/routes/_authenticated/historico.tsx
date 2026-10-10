@@ -8,6 +8,7 @@ import { gerarPdfInventario } from "@/lib/pdf-inventario";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/historico")({
+  head: () => ({ meta: [{"title": "Histórico de Inventários"}, {"name": "description", "content": "Consulta de inventários e relatórios de contagens e divergências."}, {"property": "og:title", "content": "Histórico de Inventários"}, {"property": "og:description", "content": "Consulta de inventários e relatórios de contagens e divergências."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Historico,
 });
 

@@ -6,6 +6,7 @@ import { dateBR } from "@/lib/format";
 import { Camera, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/historico-camera")({
+  head: () => ({ meta: [{"title": "Histórico de Câmera — Inventário"}, {"name": "description", "content": "Registros de contagens de materiais com evidências fotográficas."}, {"property": "og:title", "content": "Histórico de Câmera — Inventário"}, {"property": "og:description", "content": "Registros de contagens de materiais com evidências fotográficas."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: HistoricoCamera,
 });
 

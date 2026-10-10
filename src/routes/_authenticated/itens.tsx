@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { parseItensFile } from "@/lib/import-itens";
 
 export const Route = createFileRoute("/_authenticated/itens")({
+  head: () => ({ meta: [{"title": "Cadastro de Itens — Inventário"}, {"name": "description", "content": "Cadastro e consulta de códigos, descrições, quantidades e preços de produtos."}, {"property": "og:title", "content": "Cadastro de Itens — Inventário"}, {"property": "og:description", "content": "Cadastro e consulta de códigos, descrições, quantidades e preços de produtos."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ItensPage,
 });
 

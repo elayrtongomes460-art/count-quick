@@ -7,6 +7,7 @@ import { Camera, Download, FileDown, Play } from "lucide-react";
 import { gerarPdfInventario } from "@/lib/pdf-inventario";
 
 export const Route = createFileRoute("/_authenticated/inventario/$id")({
+  head: () => ({ meta: [{"title": "Detalhes do Inventário"}, {"name": "description", "content": "Itens contados, quantidades em estoque e divergências do inventário."}, {"property": "og:title", "content": "Detalhes do Inventário"}, {"property": "og:description", "content": "Itens contados, quantidades em estoque e divergências do inventário."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Detalhes,
 });
 

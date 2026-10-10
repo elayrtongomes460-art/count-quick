@@ -10,6 +10,7 @@ import { toast } from "sonner";
 type Search = { inventario?: string };
 
 export const Route = createFileRoute("/_authenticated/contagem-camera")({
+  head: () => ({ meta: [{"title": "Contagem por Câmera — Inventário"}, {"name": "description", "content": "Conferência de parafusos, porcas e arruelas por fotografia."}, {"property": "og:title", "content": "Contagem por Câmera — Inventário"}, {"property": "og:description", "content": "Conferência de parafusos, porcas e arruelas por fotografia."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ContagemCamera,
   validateSearch: (s: Record<string, unknown>): Search => ({
     inventario: typeof s.inventario === "string" ? s.inventario : undefined,
