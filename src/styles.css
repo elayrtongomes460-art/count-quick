@@ -109,9 +109,11 @@
   .scale-workspace label > span { display: block; line-height: 16px; }
   .scale-workspace label > :not(:first-child) { margin-top: 2px; }
   .scale-workspace [aria-label="Informações do produto"] { padding-block: 4px; }
+  .scale-workspace [aria-label="Informações do produto"] .bg-muted { padding-block: 4px; }
   .scale-workspace [role="tabpanel"] { margin-top: 0; }
   .scale-workspace [role="tabpanel"] > section { padding-block: 4px; }
   .scale-workspace [role="tabpanel"] > section > :not(:first-child) { margin-top: 4px; }
   .scale-workspace [aria-live="polite"] { padding-block: 4px; }
   .scale-workspace [aria-live="polite"] > p { padding-block: 0; }
+  .scale-workspace [role="tabpanel"] > section > p:last-child { font-size: 10px; }
 }
