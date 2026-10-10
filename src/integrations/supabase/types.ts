@@ -193,6 +193,44 @@ export type Database = {
         }
         Relationships: []
       }
+      item_pesos: {
+        Row: {
+          id: string
+          item_id: string
+          peso_unitario_g: number
+          tara_recipiente_g: number
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          peso_unitario_g: number
+          tara_recipiente_g?: number
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          peso_unitario_g?: number
+          tara_recipiente_g?: number
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_pesos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       itens: {
         Row: {
           created_at: string
