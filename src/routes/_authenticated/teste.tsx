@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { useEffect, useMemo, useState } from 'react';
-import { Scale, Save, RotateCcw, ClipboardList } from 'lucide-react';
+import { Scale, Save, RotateCcw, ClipboardList, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ function Teste() {
   const [savingCount, setSavingCount] = useState(false);
   const [replaceOpen, setReplaceOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [codeSearchOpen, setCodeSearchOpen] = useState(false);
   const [itemId, setItemId] = useState('');
   const [tipo, setTipo] = useState('parafuso');
   const [unitWeight, setUnitWeight] = useState('');
@@ -60,9 +61,9 @@ function Teste() {
   const item = data.items.find(i => i.id === itemId);
   const config = data.weights.find(w => w.item_id === itemId);
   const filtered = useMemo(() => {
-    const term = view === 'cadastro' ? search.trim().toLocaleLowerCase() : '';
+    const term = view === 'cadastro' || codeSearchOpen ? search.trim().toLocaleLowerCase() : '';
     return data.items.filter(i => i.id === itemId || `${i.produto} ${i.part_number} ${i.designacao}`.toLocaleLowerCase().includes(term));
-  }, [data.items, search, itemId, view]);
+  }, [data.items, search, itemId, view, codeSearchOpen]);
 
   useEffect(() => {
     setTipo(config?.tipo ?? 'parafuso');
@@ -119,7 +120,8 @@ function Teste() {
     {view === 'contagem' && <WeightInventoryPanel inventoryId={inventoryId} onChange={id => { setScaleWeight(''); navigate({ to: '/teste', search: { inventario: id || undefined }, replace: true }); }} />}
     <section className="space-y-2">
       {view === 'cadastro' && <label className="block space-y-1.5"><span className="text-sm font-medium">Buscar código ou descrição</span><input className={inputClass} value={search} onChange={e => setSearch(e.target.value)} placeholder="Código, part number ou descrição" /></label>}
-      <label className="block space-y-1.5"><span className="text-sm font-medium">Código do produto</span><select className={inputClass} value={itemId} onChange={e => setItemId(e.target.value)}><option value="">Selecionar produto</option>{filtered.map(i => <option key={i.id} value={i.id}>{i.produto} — {i.designacao}</option>)}</select></label>
+      <div className="flex items-end gap-2"><label className="block min-w-0 flex-1 space-y-1.5"><span className="text-sm font-medium">Código do produto</span><select className={inputClass} value={itemId} onChange={e => { setItemId(e.target.value); if (view === 'contagem') { setCodeSearchOpen(false); setSearch(''); } }}><option value="">Selecionar produto</option>{filtered.map(i => <option key={i.id} value={i.id}>{i.produto} — {i.designacao}</option>)}</select></label>{view === 'contagem' && <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label={codeSearchOpen ? 'Fechar busca por código' : 'Buscar por código'} title={codeSearchOpen ? 'Fechar busca por código' : 'Buscar por código'} aria-expanded={codeSearchOpen} aria-controls="weight-code-search" onClick={() => { setCodeSearchOpen(open => !open); setSearch(''); }}>{codeSearchOpen ? <X /> : <Search />}</Button>}</div>
+      {view === 'contagem' && codeSearchOpen && <label id="weight-code-search" className="block space-y-1.5"><span className="text-sm font-medium">Buscar por código</span><input autoFocus className={inputClass} value={search} onChange={e => setSearch(e.target.value)} placeholder="Digite o código do produto" />{search.trim() && !data.items.some(i => `${i.produto} ${i.part_number} ${i.designacao}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())) && <span role="status" className="block text-sm text-muted-foreground">Nenhum produto encontrado.</span>}</label>}
       {!data.items.length && <p className="text-sm text-muted-foreground">Nenhum produto cadastrado.</p>}
       {view === 'cadastro' && search && !filtered.length && <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>}
       {view === 'cadastro' && item && <dl aria-label="Informações do produto" className="border-y border-border py-2 space-y-1 text-xs break-words">
