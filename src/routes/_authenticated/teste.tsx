@@ -82,7 +82,7 @@ function Teste() {
 
   return <AppShell title="Balança" compact>
     <div className="flex items-center gap-2 mb-2"><Scale className="size-6 shrink-0 text-primary" /><div className="min-w-0"><h2 className="text-base font-semibold">Contagem por peso</h2><p className="text-xs text-muted-foreground">Parafusos · Porcas · Arruelas</p></div></div>
-    <Tabs value={view} onValueChange={setView}>
+    <Tabs value={view} onValueChange={setView} className="scale-workspace">
     <TabsList aria-label="Contagem por peso" className="grid grid-cols-2 w-full h-12 mb-2 rounded-md">
       <TabsTrigger value="contagem" className="h-10 gap-2"><Scale className="size-4" />Contagem</TabsTrigger>
       <TabsTrigger value="cadastro" className="h-10 gap-2"><ClipboardList className="size-4" />Cadastro</TabsTrigger>
