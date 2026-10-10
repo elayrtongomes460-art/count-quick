@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HomeCard } from "@/components/AppShell";
-import { Boxes, Camera, ClipboardList, History, PackageSearch, Scale, Scan, User } from "lucide-react";
+import { Boxes, Camera, ClipboardList, History, PackageSearch, Scale, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{"title": "Início — Inventário"}, {"name": "description", "content": "Inventários, cadastro de produtos e contagem de materiais."}, {"property": "og:title", "content": "Início — Inventário"}, {"property": "og:description", "content": "Inventários, cadastro de produtos e contagem de materiais."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
@@ -35,16 +35,9 @@ function Home() {
             tone="accent"
           />
           <HomeCard
-            to="/contagem-ia"
-            icon={Scan}
-            label="Contagem por IA"
-            desc="Detectar e contar objetos automaticamente pela câmera"
-            tone="accent"
-          />
-          <HomeCard
             to="/teste"
             icon={Scale}
-            label="Teste"
+            label="Balança"
             desc="Contagem de parafusos, porcas e arruelas por peso"
             tone="muted"
           />
