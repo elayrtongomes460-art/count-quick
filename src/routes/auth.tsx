@@ -5,6 +5,7 @@ import { Boxes, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({ meta: [{"title": "Entrar — Inventário"}, {"name": "description", "content": "Acesso à conta do aplicativo de inventário operacional."}, {"property": "og:title", "content": "Entrar — Inventário"}, {"property": "og:description", "content": "Acesso à conta do aplicativo de inventário operacional."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   ssr: false,
   component: AuthPage,
 });

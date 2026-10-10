@@ -8,6 +8,7 @@ import { Check, CheckCircle2, Eraser, ListChecks, Plus, ScanLine } from "lucide-
 import { SignaturePad } from "@/components/SignaturePad";
 
 export const Route = createFileRoute("/_authenticated/contagem/$id")({
+  head: () => ({ meta: [{"title": "Contagem por Scanner — Inventário"}, {"name": "description", "content": "Conferência de produtos e quantidades por leitura de códigos."}, {"property": "og:title", "content": "Contagem por Scanner — Inventário"}, {"property": "og:description", "content": "Conferência de produtos e quantidades por leitura de códigos."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Contagem,
 });
 
