@@ -1,5 +1,5 @@
 # Tasks
-- [ ] Gerar e verificar APK Android instalável conectado ao aplicativo publicado.
+- [x] Gerar APK Android conectado ao aplicativo publicado e verificar assinatura e estrutura; teste no aparelho físico não disponível neste ambiente.
 - [x] Adicionar Balança com código, descrição e referência de peso por produto.
 - [x] Calcular quantidade pelo peso com unidades e tara do recipiente.
 - [x] Verificar fluxo e atualizar dependências obrigatórias.
