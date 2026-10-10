@@ -14,3 +14,4 @@
 - Use AppShell's opt-in compact spacing for single-screen tools; this keeps other routes' established spacing unchanged.
 - Persist weight counts through authenticated server functions into the existing inventory and inventory-item records, preserving the inventory snapshot on recount; this reuses history, signatures and PDF without changing stock or scanner counting.
 - Keep the selected weight inventory in route search and its list in TanStack Query; this supports reloads and resuming counts from inventory details.
+- Keep Android packaging in android-apk as a thin HTTPS WebView client of the published app; this preserves TanStack server functions and existing inventory workflows without duplicating them.
