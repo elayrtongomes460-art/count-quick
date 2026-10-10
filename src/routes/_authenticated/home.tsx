@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HomeCard } from "@/components/AppShell";
-import { Boxes, Camera, ClipboardList, History, PackageSearch, Scan, User } from "lucide-react";
+import { Boxes, Camera, ClipboardList, History, PackageSearch, Scale, Scan, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: Home,
@@ -39,6 +39,13 @@ function Home() {
             label="Contagem por IA"
             desc="Detectar e contar objetos automaticamente pela câmera"
             tone="accent"
+          />
+          <HomeCard
+            to="/teste"
+            icon={Scale}
+            label="Teste"
+            desc="Contagem de parafusos, porcas e arruelas por peso"
+            tone="muted"
           />
           <HomeCard
             to="/itens"
