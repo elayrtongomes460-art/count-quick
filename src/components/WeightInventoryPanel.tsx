@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { SignaturePad } from '@/components/SignaturePad';
 import { weightInventoriesOptions, weightInventoryOptions } from '@/lib/weight-inventory.queries';
-import { finishWeightInventory, startWeightInventory } from '@/lib/weight-inventory.functions';
+import { finishWeightInventory } from '@/lib/weight-inventory.functions';
 import { gerarPdfInventario } from '@/lib/pdf-inventario';
 import { brl, num } from '@/lib/format';
+import { InventorySetup } from '@/components/InventorySetup';
 
 const inputClass = 'w-full h-11 rounded-md border border-input bg-card px-3 text-base';
 
@@ -19,29 +20,11 @@ export function WeightInventoryPanel({ inventoryId, onChange }: { inventoryId: s
   const selected = useQuery(weightInventoryOptions(inventoryId));
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const start = useServerFn(startWeightInventory);
   const finish = useServerFn(finishWeightInventory);
   const [dialog, setDialog] = useState<'start' | 'list' | null>(null);
-  const [name, setName] = useState('');
-  const [responsible, setResponsible] = useState(data.responsible);
-  const [date, setDate] = useState(() => new Date().toLocaleDateString('en-CA'));
-  const [observation, setObservation] = useState('');
   const [saving, setSaving] = useState(false);
   const [showSignatures, setShowSignatures] = useState(false);
   const inventory = selected.data?.inventory;
-
-  const create = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setSaving(true);
-    try {
-      const created = await start({ data: { name, responsible, date, observation } });
-      await queryClient.invalidateQueries({ queryKey: weightInventoriesOptions.queryKey });
-      onChange(created.id);
-      setDialog(null); setName(''); setObservation('');
-      toast.success('Inventário iniciado.');
-    } catch (error) { toast.error(error instanceof Error ? error.message : 'Não foi possível iniciar o inventário.'); }
-    finally { setSaving(false); }
-  };
 
   const finalize = async (signatures: string[]) => {
     try {
@@ -74,22 +57,16 @@ export function WeightInventoryPanel({ inventoryId, onChange }: { inventoryId: s
       {!inventoryId && <Button asChild variant="outline" size="icon" className="h-11 w-11 shrink-0" title="Histórico"><Link to="/historico" aria-label="Histórico"><History /></Link></Button>}
     </div>
     {selected.isError && <p role="alert" className="text-xs text-destructive mb-2">Não foi possível carregar este inventário.</p>}
-    {inventory && <p className="text-xs text-muted-foreground mb-2" role="status">{inventory.status} · {selected.data?.items.length ?? 0} produto(s) contado(s)</p>}
+    {inventory && <p className="text-xs text-muted-foreground mb-2" role="status">{inventory.status} · {selected.data?.items.filter(i => i.contado).length ?? 0} produto(s) contado(s)</p>}
     <Dialog open={dialog !== null} onOpenChange={open => { if (!open && !saving) setDialog(null); }}>
       <DialogContent className="max-w-lg w-[calc(100%-24px)] rounded-lg max-h-[90dvh] overflow-y-auto">
         <DialogTitle>{dialog === 'start' ? 'Iniciar inventário' : 'Listagem da contagem'}</DialogTitle>
-        <DialogDescription>{dialog === 'start' ? 'Identificação do inventário' : `${inventory?.nome_inventario ?? ''} · ${selected.data?.items.length ?? 0} produto(s)`}</DialogDescription>
-        {dialog === 'start' ? <form onSubmit={create} className="space-y-3">
-          <label className="block space-y-1"><span className="text-sm font-medium">Nome do inventário</span><input className={inputClass} value={name} onChange={e => setName(e.target.value)} required maxLength={200} /></label>
-          <label className="block space-y-1"><span className="text-sm font-medium">Data</span><input type="date" className={inputClass} value={date} onChange={e => setDate(e.target.value)} required /></label>
-          <label className="block space-y-1"><span className="text-sm font-medium">Responsável</span><input className={inputClass} value={responsible} onChange={e => setResponsible(e.target.value)} required maxLength={200} /></label>
-          <label className="block space-y-1"><span className="text-sm font-medium">Observação</span><textarea className={`${inputClass} h-20 py-2`} value={observation} onChange={e => setObservation(e.target.value)} /></label>
-          <Button className="h-12 w-full" disabled={saving}><Play />{saving ? 'Iniciando…' : 'Iniciar inventário'}</Button>
-        </form> : <>
+        <DialogDescription>{dialog === 'start' ? 'Identificação do inventário' : `${inventory?.nome_inventario ?? ''} · ${selected.data?.items.filter(i => i.contado).length ?? 0} produto(s)`}</DialogDescription>
+        {dialog === 'start' ? <InventorySetup onCreated={id => { onChange(id); setDialog(null); }} /> : <>
           <ul className="space-y-2 max-h-[42dvh] overflow-y-auto">
             {selected.data?.items.map(i => <li key={i.id} className="border border-border rounded-md p-3 text-sm">
               <p className="font-semibold text-primary break-words">{i.produto}</p><p className="break-words">{i.designacao}</p>
-              <div className="flex flex-wrap gap-x-3 mt-1 text-xs text-muted-foreground"><span>Sistema: {num(i.quantidade_un_sistema, 0)} {i.unidade_un}</span><span>Contada: {num(i.quantidade_contada, 0)}</span><span className={Number(i.diferenca) !== 0 ? 'text-destructive' : 'text-success'}>Diferença: {num(i.diferenca, 0)}</span><span>{brl(i.valor_divergencia)}</span></div>
+              <div className="flex flex-wrap gap-x-3 mt-1 text-xs text-muted-foreground"><span>Sistema: {num(i.quantidade_un_sistema, 0)} {i.unidade_un}</span><span>{i.contado ? `Contada: ${num(i.quantidade_contada, 0)}` : 'Pendente'}</span><span className={Number(i.diferenca) !== 0 ? 'text-destructive' : 'text-success'}>Diferença: {num(i.diferenca, 0)}</span><span>{brl(i.valor_divergencia)}</span></div>
             </li>)}
             {!selected.data?.items.length && <li className="py-6 text-center text-sm text-muted-foreground">Nenhum item contado.</li>}
           </ul>
