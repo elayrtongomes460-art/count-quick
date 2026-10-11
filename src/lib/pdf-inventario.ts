@@ -19,6 +19,7 @@ export type InvForPdf = {
 
 export type InvItemForPdf = {
   contado?: boolean;
+  observacao?: string;
   produto: string;
   part_number: string | null;
   designacao: string | null;
@@ -511,7 +512,7 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
       const d = Number(i.diferenca);
       const status = i.contado === false ? "PENDENTE" : d === 0 ? "OK" : d > 0 ? "SOBRA" : "FALTA";
       return [
-        i.produto, i.part_number || "-", i.designacao || "",
+        i.produto, i.part_number || "-", [i.designacao, i.observacao].filter(Boolean).join("\n"),
         i.localizacao || "-", i.unidade_un || "-",
         num(i.quantidade_un_sistema, 0), i.contado === false ? "—" : num(i.quantidade_contada, 0),
         i.contado === false ? "—" : (d > 0 ? "+" : "") + num(d, 0),

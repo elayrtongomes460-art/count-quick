@@ -66,6 +66,7 @@ export function WeightInventoryPanel({ inventoryId, onChange }: { inventoryId: s
           <ul className="space-y-2 max-h-[42dvh] overflow-y-auto">
             {selected.data?.items.map(i => <li key={i.id} className="border border-border rounded-md p-3 text-sm">
               <p className="font-semibold text-primary break-words">{i.produto}</p><p className="break-words">{i.designacao}</p>
+              {i.observacao && <p className="text-xs text-muted-foreground break-words">{i.observacao}</p>}
               <div className="flex flex-wrap gap-x-3 mt-1 text-xs text-muted-foreground"><span>Sistema: {num(i.quantidade_un_sistema, 0)} {i.unidade_un}</span><span>{i.contado ? `Contada: ${num(i.quantidade_contada, 0)}` : 'Pendente'}</span><span className={Number(i.diferenca) !== 0 ? 'text-destructive' : 'text-success'}>Diferença: {num(i.diferenca, 0)}</span><span>{brl(i.valor_divergencia)}</span></div>
             </li>)}
             {!selected.data?.items.length && <li className="py-6 text-center text-sm text-muted-foreground">Nenhum item contado.</li>}

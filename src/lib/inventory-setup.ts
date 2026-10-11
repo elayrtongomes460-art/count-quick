@@ -21,7 +21,10 @@ const aliases: Record<string, keyof InventoryRow> = {
 
 export function referenceNumber(value: unknown): number {
   if (value == null || value === '') return 0;
-  if (typeof value === 'number') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || value < 0) throw new Error('Quantidade e valor devem ser positivos ou zero.');
+    return value;
+  }
   let text = String(value).trim().replace(/^R\$\s*/, '').replace(/\s/g, '');
   if (text.includes(',')) text = text.replace(/\./g, '').replace(',', '.');
   if (!/^\d+(?:\.\d+)?$/.test(text)) throw new Error(`Número inválido: ${String(value)}`);
