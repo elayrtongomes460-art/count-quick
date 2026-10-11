@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Separar cadastro permanente e dados do inventário, com seleção manual e importação Excel confirmada.
+- [ ] Preservar referências do inventário nas contagens por scanner e Balança, histórico e PDF; testar os fluxos.
 - [x] Atualizar dependências com correções disponíveis, verificar lockfile, executar testes e confirmar compilação automática.
 - [ ] Corrigir sprintf-js em @tanstack/react-start e mammoth; bloqueado: registro só oferece até 1.1.3, mas a correção exige versão superior.
 - [x] Gerar APK Android conectado ao aplicativo publicado e verificar assinatura e estrutura; teste no aparelho físico não disponível neste ambiente.
