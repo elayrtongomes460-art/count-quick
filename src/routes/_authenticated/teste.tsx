@@ -59,11 +59,16 @@ function Teste() {
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState('contagem');
   const item = data.items.find(i => i.id === itemId);
+  useEffect(() => { setItemId(''); setScaleWeight(''); }, [inventoryId]);
   const config = data.weights.find(w => w.item_id === itemId);
   const filtered = useMemo(() => {
     const term = view === 'cadastro' || codeSearchOpen ? search.trim().toLocaleLowerCase() : '';
-    return data.items.filter(i => i.id === itemId || `${i.produto} ${i.part_number} ${i.designacao}`.toLocaleLowerCase().includes(term));
-  }, [data.items, search, itemId, view, codeSearchOpen]);
+    return data.items.filter(i => {
+      const inInventory = !inventoryId || inventory.data?.inventory.origem_itens === 'legado' || inventory.data?.items.some(row => row.item_id === i.id);
+      const eligible = view === 'cadastro' || (data.weights.some(w => w.item_id === i.id) && inInventory);
+      return eligible && (i.id === itemId || `${i.produto} ${i.part_number} ${i.designacao}`.toLocaleLowerCase().includes(term));
+    });
+  }, [data.items, data.weights, inventoryId, inventory.data, search, itemId, view, codeSearchOpen]);
 
   useEffect(() => {
     setTipo(config?.tipo ?? 'parafuso');
@@ -127,11 +132,7 @@ function Teste() {
       {view === 'cadastro' && item && <dl aria-label="Informações do produto" className="border-y border-border py-2 space-y-1 text-xs break-words">
         <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Part Number</dt><dd className="text-right font-medium">{item.part_number || '—'}</dd></div>
         <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-start"><dt className="text-muted-foreground">Designação</dt><dd className="text-right font-medium">{item.designacao || '—'}</dd></div>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="min-w-0 rounded-md bg-muted p-2"><dt className="text-[10px] uppercase text-muted-foreground">Qtd sistema</dt><dd className="font-medium mt-1 tabular-nums">{numberFormat.format(Number(item.quantidade_un))} {item.unidade_un || 'UN'}</dd></div>
-          <div className="min-w-0 rounded-md bg-muted p-2"><dt className="text-[10px] uppercase text-muted-foreground">Localização</dt><dd className="font-medium mt-1">{item.localizacao || '—'}</dd></div>
-          <div className="min-w-0 rounded-md bg-muted p-2"><dt className="text-[10px] uppercase text-muted-foreground">Preço médio</dt><dd className="font-medium mt-1 tabular-nums">{brl(item.preco_medio_pond)}</dd></div>
-        </div>
+
       </dl>}
     </section>
     {item && <>

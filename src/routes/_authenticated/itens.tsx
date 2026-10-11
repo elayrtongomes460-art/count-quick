@@ -9,7 +9,7 @@ import { parseItensFile } from "@/lib/import-itens";
 import { serializeCsv } from "@/lib/csv";
 
 export const Route = createFileRoute("/_authenticated/itens")({
-  head: () => ({ meta: [{"title": "Cadastro de Itens — Inventário"}, {"name": "description", "content": "Cadastro e consulta de códigos, descrições, quantidades e preços de produtos."}, {"property": "og:title", "content": "Cadastro de Itens — Inventário"}, {"property": "og:description", "content": "Cadastro e consulta de códigos, descrições, quantidades e preços de produtos."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
+  head: () => ({ meta: [{"title": "Cadastro de Itens — Inventário"}, {"name": "description", "content": "Cadastro permanente de códigos, descrições e especificações de produtos."}, {"property": "og:title", "content": "Cadastro de Itens — Inventário"}, {"property": "og:description", "content": "Cadastro permanente de códigos, descrições e especificações de produtos."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ItensPage,
 });
 
@@ -18,6 +18,7 @@ type Item = {
   produto: string;
   part_number: string | null;
   designacao: string;
+  especificacoes: string;
   quantidade_un: number;
   unidade_un: string;
   localizacao: string;
@@ -25,7 +26,7 @@ type Item = {
 };
 
 const empty: Omit<Item, "id"> = {
-  produto: "", part_number: "", designacao: "",
+  produto: "", part_number: "", designacao: "", especificacoes: "",
   quantidade_un: 0, unidade_un: "UN", localizacao: "", preco_medio_pond: 0,
 };
 
@@ -74,8 +75,8 @@ function ItensPage() {
   };
 
   const exportCsv = () => {
-    const header = ["Produto","Part_Number","Designacao","Quantidade_UN","Unidade_UN","Localizacao","Preco_medio_pond"];
-    const rows = itens.map(i => [i.produto, i.part_number ?? "", i.designacao, i.quantidade_un, i.unidade_un, i.localizacao, i.preco_medio_pond]);
+    const header = ["Produto","Part_Number","Designacao","Especificacoes","Unidade_UN"];
+    const rows = itens.map(i => [i.produto, i.part_number ?? "", i.designacao, i.especificacoes, i.unidade_un]);
     const csv = serializeCsv([header, ...rows]);
     const blob = new Blob(["\ufeff"+csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
@@ -97,12 +98,12 @@ function ItensPage() {
       let ok = 0, upd = 0, err = 0;
       for (const row of rows) {
         const payload = {
-          ...row,
+
           produto: normalizeCodigo(row.produto),
           part_number: normalizeCodigo(row.part_number),
           designacao: String(row.designacao ?? "").trim(),
           unidade_un: normalizeCodigo(row.unidade_un) || "UN",
-          localizacao: String(row.localizacao ?? "").trim(),
+
         };
         const { error } = await supabase.from("itens").upsert(payload, { onConflict: "produto" });
         if (error) err++;
@@ -173,7 +174,7 @@ function ItensPage() {
         </button>
 
         <div className="text-[11px] text-muted-foreground px-1 -mt-1">
-          Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, quantidade_un, unidade_un, localizacao, preco_medio_pond.
+          Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, unidade_un. Quantidade, preço e localização são importados ao iniciar um inventário.
         </div>
 
         <div className="text-xs text-muted-foreground px-1">
@@ -189,9 +190,8 @@ function ItensPage() {
                   <div className="text-sm font-medium truncate">{i.designacao}</div>
                   <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
                     {i.part_number && <span>PN: {i.part_number}</span>}
-                    <span>Qtd: {num(i.quantidade_un, 0)} {i.unidade_un}</span>
-                    <span>{i.localizacao}</span>
-                    <span>{brl(i.preco_medio_pond)}</span>
+                    <span>{i.unidade_un}</span>
+                    {i.especificacoes && <span>{i.especificacoes}</span>}
                   </div>
                 </div>
                 <button onClick={() => { setEditing(i); setShowForm(true); }} className="p-2 rounded-md bg-secondary"><Pencil className="size-4" /></button>
@@ -233,10 +233,8 @@ function ItemForm({ initial, onClose, onSaved }: { initial: Item; onClose: () =>
       produto: normalizeCodigo(f.produto),
       part_number: normalizeCodigo(f.part_number),
       designacao: f.designacao.trim(),
-      quantidade_un: Number(f.quantidade_un) || 0,
+      especificacoes: f.especificacoes?.trim() ?? "",
       unidade_un: normalizeCodigo(f.unidade_un) || "UN",
-      localizacao: f.localizacao ?? "",
-      preco_medio_pond: Number(f.preco_medio_pond) || 0,
       created_by: u.user?.id,
     };
     const { error } = isEdit
@@ -263,12 +261,8 @@ function ItemForm({ initial, onClose, onSaved }: { initial: Item; onClose: () =>
           <FF label="Produto" required><input className="ipt" value={f.produto} onChange={e => set("produto", e.target.value)} autoFocus={!isEdit} /></FF>
           <FF label="Part Number"><input className="ipt" value={f.part_number ?? ""} onChange={e => set("part_number", e.target.value)} /></FF>
           <FF label="Designação" required><input className="ipt" value={f.designacao} onChange={e => set("designacao", e.target.value)} /></FF>
-          <div className="grid grid-cols-2 gap-3">
-            <FF label="Quantidade UN"><input type="number" step="any" inputMode="decimal" className="ipt" value={f.quantidade_un} onChange={e => set("quantidade_un", Number(e.target.value))} /></FF>
-            <FF label="Unidade UN"><input className="ipt" value={f.unidade_un} onChange={e => set("unidade_un", e.target.value)} /></FF>
-          </div>
-          <FF label="Localização"><input className="ipt" value={f.localizacao} onChange={e => set("localizacao", e.target.value)} /></FF>
-          <FF label="Preço médio pond."><input type="number" step="any" inputMode="decimal" className="ipt" value={f.preco_medio_pond} onChange={e => set("preco_medio_pond", Number(e.target.value))} /></FF>
+          <FF label="Especificações"><textarea className="ipt" value={f.especificacoes ?? ""} onChange={e => set("especificacoes", e.target.value)} /></FF>
+          <FF label="Unidade UN"><input className="ipt" value={f.unidade_un} onChange={e => set("unidade_un", e.target.value)} /></FF>
 
           <button type="submit" disabled={saving} className="w-full bg-primary text-primary-foreground py-3.5 rounded-lg font-semibold mt-2 disabled:opacity-60">
             {saving ? "Salvando…" : "Salvar"}

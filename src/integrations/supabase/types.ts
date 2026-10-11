@@ -81,6 +81,7 @@ export type Database = {
       }
       inventario_itens: {
         Row: {
+          contado: boolean
           created_at: string
           designacao: string | null
           diferenca: number
@@ -88,6 +89,7 @@ export type Database = {
           inventario_id: string
           item_id: string | null
           localizacao: string | null
+          observacao: string
           part_number: string | null
           preco_medio_pond: number
           produto: string
@@ -98,6 +100,7 @@ export type Database = {
           valor_divergencia: number
         }
         Insert: {
+          contado?: boolean
           created_at?: string
           designacao?: string | null
           diferenca?: number
@@ -105,6 +108,7 @@ export type Database = {
           inventario_id: string
           item_id?: string | null
           localizacao?: string | null
+          observacao?: string
           part_number?: string | null
           preco_medio_pond?: number
           produto: string
@@ -115,6 +119,7 @@ export type Database = {
           valor_divergencia?: number
         }
         Update: {
+          contado?: boolean
           created_at?: string
           designacao?: string | null
           diferenca?: number
@@ -122,6 +127,7 @@ export type Database = {
           inventario_id?: string
           item_id?: string | null
           localizacao?: string | null
+          observacao?: string
           part_number?: string | null
           preco_medio_pond?: number
           produto?: string
@@ -158,6 +164,7 @@ export type Database = {
           id: string
           nome_inventario: string
           observacao: string | null
+          origem_itens: string
           responsavel: string
           status: string
           updated_at: string
@@ -172,6 +179,7 @@ export type Database = {
           id?: string
           nome_inventario: string
           observacao?: string | null
+          origem_itens?: string
           responsavel: string
           status?: string
           updated_at?: string
@@ -186,6 +194,7 @@ export type Database = {
           id?: string
           nome_inventario?: string
           observacao?: string | null
+          origem_itens?: string
           responsavel?: string
           status?: string
           updated_at?: string
@@ -236,6 +245,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           designacao: string
+          especificacoes: string
           id: string
           localizacao: string
           part_number: string
@@ -249,6 +259,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           designacao: string
+          especificacoes?: string
           id?: string
           localizacao?: string
           part_number?: string
@@ -262,6 +273,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           designacao?: string
+          especificacoes?: string
           id?: string
           localizacao?: string
           part_number?: string
@@ -299,7 +311,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_inventory_with_items: {
+        Args: { p_create_missing?: boolean; p_inventory: Json; p_rows: Json }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

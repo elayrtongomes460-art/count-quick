@@ -36,7 +36,7 @@ export const saveWeightInventoryItem = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ inventoryId: z.string().uuid(), itemId: z.string().uuid(), grossG: z.number().finite().nonnegative(), replace: z.boolean().default(false) }))
   .handler(async ({ data, context }) => {
-    const inventory = await context.supabase.from('inventarios').select('status').eq('id', data.inventoryId).eq('user_id', context.userId).single();
+    const inventory = await context.supabase.from('inventarios').select('status,origem_itens').eq('id', data.inventoryId).eq('user_id', context.userId).single();
     if (inventory.error || inventory.data.status !== 'Em andamento') throw new Error('Selecione um inventário em andamento.');
     const item = await context.supabase.from('itens').select('*').eq('id', data.itemId).single();
     if (item.error) throw new Error('Produto não encontrado.');
@@ -46,11 +46,12 @@ export const saveWeightInventoryItem = createServerFn({ method: 'POST' })
     if (!result || !Number.isSafeInteger(result.quantity)) throw new Error('Pesagem inválida.');
     const existing = await context.supabase.from('inventario_itens').select('*').eq('inventario_id', data.inventoryId).eq('produto', item.data.produto).maybeSingle();
     if (existing.error) throw new Error(existing.error.message);
-    if (existing.data && !data.replace) return { needsConfirmation: true, quantity: result.quantity };
+    if (!existing.data && inventory.data.origem_itens !== 'legado') throw new Error('Este produto não foi selecionado para o inventário.');
+    if (existing.data?.contado && !data.replace) return { needsConfirmation: true, quantity: result.quantity };
     const baseline = Number(existing.data?.quantidade_un_sistema ?? item.data.quantidade_un);
     const price = Number(existing.data?.preco_medio_pond ?? item.data.preco_medio_pond);
     const difference = result.quantity - baseline;
-    const payload = { inventario_id: data.inventoryId, item_id: item.data.id, produto: item.data.produto, part_number: existing.data?.part_number ?? item.data.part_number, designacao: existing.data?.designacao ?? item.data.designacao, quantidade_un_sistema: baseline, unidade_un: existing.data?.unidade_un ?? item.data.unidade_un, localizacao: existing.data?.localizacao ?? item.data.localizacao, preco_medio_pond: price, quantidade_contada: result.quantity, diferenca: difference, valor_divergencia: difference * price };
+    const payload = { inventario_id: data.inventoryId, item_id: item.data.id, produto: item.data.produto, part_number: existing.data?.part_number ?? item.data.part_number, designacao: existing.data?.designacao ?? item.data.designacao, quantidade_un_sistema: baseline, unidade_un: existing.data?.unidade_un ?? item.data.unidade_un, localizacao: existing.data?.localizacao ?? item.data.localizacao, preco_medio_pond: price, quantidade_contada: result.quantity, diferenca: difference, valor_divergencia: difference * price, contado: true };
     const saved = await context.supabase.from('inventario_itens').upsert(payload, { onConflict: 'inventario_id,produto' });
     if (saved.error) throw new Error(saved.error.message);
     return { needsConfirmation: false, quantity: result.quantity };

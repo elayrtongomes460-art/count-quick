@@ -8,6 +8,13 @@
       "when": 1791630411395,
       "tag": "0000_create_item_pesos",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791762054939,
+      "tag": "0001_inventory_product_separation",
+      "breakpoints": true
     }
   ]
 }

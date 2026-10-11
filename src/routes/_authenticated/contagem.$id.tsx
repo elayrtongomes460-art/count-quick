@@ -17,6 +17,7 @@ type Item = {
   quantidade_un: number; unidade_un: string; localizacao: string; preco_medio_pond: number;
 };
 type InvItem = {
+  contado: boolean;
   id: string; produto: string; quantidade_un_sistema: number; quantidade_contada: number;
   diferenca: number; unidade_un: string | null; localizacao: string | null;
   designacao: string | null; part_number: string | null; preco_medio_pond: number; valor_divergencia: number;
@@ -34,7 +35,7 @@ function Contagem() {
   const produtoRef = useRef<HTMLInputElement>(null);
   const qtdRef = useRef<HTMLInputElement>(null);
 
-  const [inv, setInv] = useState<{ nome_inventario: string; status: string } | null>(null);
+  const [inv, setInv] = useState<{ nome_inventario: string; status: string; origem_itens: string } | null>(null);
   const [produto, setProduto] = useState("");
   const [item, setItem] = useState<Item | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -49,7 +50,7 @@ function Contagem() {
   const processingRef = useRef<boolean>(false);
 
   const loadInv = useCallback(async () => {
-    const { data } = await supabase.from("inventarios").select("nome_inventario,status").eq("id", inventarioId).single();
+    const { data } = await supabase.from("inventarios").select("nome_inventario,status,origem_itens").eq("id", inventarioId).single();
     setInv(data);
   }, [inventarioId]);
 
@@ -92,11 +93,20 @@ function Contagem() {
       // busca a quantidade atual DIRETO no banco para evitar estado defasado entre bipadas rápidas
       const { data: existing } = await supabase
         .from("inventario_itens")
-        .select("quantidade_contada")
+        .select("*")
         .eq("inventario_id", inventarioId)
         .eq("produto", itemData.produto)
         .maybeSingle();
-      const novaQtd = existing ? Number(existing.quantidade_contada) + 1 : 1;
+      if (!existing && inv?.origem_itens !== 'legado') { toast.error('Produto não selecionado para este inventário.'); return; }
+      if (existing) {
+        itemData.quantidade_un = Number(existing.quantidade_un_sistema);
+        itemData.preco_medio_pond = Number(existing.preco_medio_pond);
+        itemData.localizacao = existing.localizacao ?? '';
+        itemData.unidade_un = existing.unidade_un ?? 'UN';
+        itemData.designacao = existing.designacao ?? itemData.designacao;
+        itemData.part_number = existing.part_number;
+      }
+      const novaQtd = existing?.contado ? Number(existing.quantidade_contada) + 1 : 1;
       const diferenca = novaQtd - Number(itemData.quantidade_un);
       const valor_divergencia = diferenca * Number(itemData.preco_medio_pond);
       const payload = {
@@ -110,6 +120,7 @@ function Contagem() {
         localizacao: itemData.localizacao,
         preco_medio_pond: itemData.preco_medio_pond,
         quantidade_contada: novaQtd,
+        contado: true,
         diferenca,
         valor_divergencia,
       };
@@ -131,7 +142,7 @@ function Contagem() {
       pendingCodigoRef.current = "";
       if (pending && pending !== codigo) void buscar(pending);
     }
-  }, [inventarioId, loadContados]);
+  }, [inventarioId, loadContados, inv]);
 
   const onProdutoChange = (v: string) => {
     setProduto(v);
@@ -166,6 +177,14 @@ function Contagem() {
 
   const salvar = async () => {
     if (!item) return toast.error("Faça a leitura de um produto primeiro.");
+    const selected = await supabase.from('inventario_itens').select('*').eq('inventario_id', inventarioId).eq('produto', item.produto).maybeSingle();
+    if (selected.error) return toast.error(selected.error.message);
+    if (!selected.data && inv?.origem_itens !== 'legado') return toast.error('Produto não selecionado para este inventário.');
+    if (selected.data) {
+      item.quantidade_un = Number(selected.data.quantidade_un_sistema);
+      item.preco_medio_pond = Number(selected.data.preco_medio_pond);
+      item.localizacao = selected.data.localizacao ?? '';
+    }
     const qc = Number(qtdContada.replace(",", "."));
     if (Number.isNaN(qc)) return toast.error("Informe a quantidade contada.");
     const diferenca = qc - Number(item.quantidade_un);
@@ -181,6 +200,7 @@ function Contagem() {
       localizacao: item.localizacao,
       preco_medio_pond: item.preco_medio_pond,
       quantidade_contada: qc,
+      contado: true,
       diferenca,
       valor_divergencia,
     };
@@ -398,7 +418,7 @@ function ContadosList({
     const diferenca = qc - Number(it.quantidade_un_sistema);
     const valor_divergencia = diferenca * Number(it.preco_medio_pond);
     const { error } = await supabase.from("inventario_itens").update({
-      quantidade_contada: qc, diferenca, valor_divergencia,
+      quantidade_contada: qc, diferenca, valor_divergencia, contado: true,
     }).eq("id", it.id);
     if (error) return toast.error(error.message);
     onChange();
@@ -426,7 +446,7 @@ function ContadosList({
                     <div className="text-sm truncate">{i.designacao}</div>
                     <div className="text-xs text-muted-foreground mt-0.5 flex gap-x-3 flex-wrap">
                       <span>Sist: {num(i.quantidade_un_sistema, 0)}</span>
-                      <span>Cont: {num(i.quantidade_contada, 0)}</span>
+                      <span>{i.contado ? `Cont: ${num(i.quantidade_contada, 0)}` : 'Pendente'}</span>
                       <span className={dif === 0 ? "" : "font-semibold text-destructive"}>Dif: {dif > 0 ? "+" : ""}{num(dif, 0)}</span>
                       <span>{brl(i.valor_divergencia)}</span>
                     </div>

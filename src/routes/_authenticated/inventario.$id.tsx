@@ -18,6 +18,7 @@ type Inv = {
   observacao: string | null; status: string; finalized_at: string | null;
 };
 type InvItem = {
+  contado: boolean; observacao: string;
   id: string; produto: string; part_number: string | null; designacao: string | null;
   quantidade_un_sistema: number; unidade_un: string | null; localizacao: string | null;
   preco_medio_pond: number; quantidade_contada: number; diferenca: number; valor_divergencia: number;
@@ -38,7 +39,7 @@ function Detalhes() {
   }, [id]);
 
   const resumo = useMemo(() => {
-    const totalItens = itens.length;
+    const totalItens = itens.filter(i => i.contado).length;
     const comDif = itens.filter(i => Number(i.diferenca) !== 0).length;
     const sobra = itens.filter(i => Number(i.diferenca) > 0).reduce((s, i) => s + Number(i.diferenca), 0);
     const falta = itens.filter(i => Number(i.diferenca) < 0).reduce((s, i) => s + Number(i.diferenca), 0);
@@ -48,11 +49,11 @@ function Detalhes() {
 
   const exportCsv = () => {
     if (!inv) return;
-    const header = ["Produto","Part_Number","Designacao","Qtd_Sistema","Qtd_Contada","Diferenca","Unidade","Localizacao","Preco_medio","Valor_divergencia"];
+    const header = ["Produto","Part_Number","Designacao","Qtd_Sistema","Qtd_Contada","Diferenca","Unidade","Localizacao","Preco_medio","Valor_divergencia","Situacao","Observacao"];
     const rows = itens.map(i => [
       i.produto, i.part_number ?? "", i.designacao ?? "",
-      i.quantidade_un_sistema, i.quantidade_contada, i.diferenca,
-      i.unidade_un ?? "", i.localizacao ?? "", i.preco_medio_pond, i.valor_divergencia,
+      i.quantidade_un_sistema, i.contado ? i.quantidade_contada : '', i.contado ? i.diferenca : '',
+      i.unidade_un ?? "", i.localizacao ?? "", i.preco_medio_pond, i.contado ? i.valor_divergencia : '', i.contado ? 'Contado' : 'Pendente', i.observacao,
     ]);
     const meta = [
       ["Inventario", inv.nome_inventario],
@@ -125,10 +126,11 @@ function Detalhes() {
                 <div className="text-sm">{i.designacao}</div>
                 <div className="text-xs text-muted-foreground mt-1 flex gap-x-3 flex-wrap">
                   <span>Sist: {num(i.quantidade_un_sistema, 0)} {i.unidade_un}</span>
-                  <span>Cont: {num(i.quantidade_contada, 0)}</span>
+                  <span>{i.contado ? `Cont: ${num(i.quantidade_contada, 0)}` : 'Pendente'}</span>
                   <span className={dif === 0 ? "" : "font-semibold text-destructive"}>Dif: {dif > 0 ? "+" : ""}{num(dif, 0)}</span>
                   <span>{i.localizacao}</span>
                   <span>{brl(i.valor_divergencia)}</span>
+                  {i.observacao && <span>{i.observacao}</span>}
                 </div>
               </li>
             );
