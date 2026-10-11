@@ -97,7 +97,12 @@ function Contagem() {
         .eq("inventario_id", inventarioId)
         .eq("produto", itemData.produto)
         .maybeSingle();
-      if (!existing && inv?.origem_itens !== 'legado') { toast.error('Produto não selecionado para este inventário.'); return; }
+      if (!existing && !['legado', 'livre'].includes(inv?.origem_itens ?? '')) { toast.error('Produto não selecionado para este inventário.'); return; }
+      if (!existing && inv?.origem_itens === 'livre') {
+        itemData.quantidade_un = 0;
+        itemData.preco_medio_pond = 0;
+        itemData.localizacao = '';
+      }
       if (existing) {
         itemData.quantidade_un = Number(existing.quantidade_un_sistema);
         itemData.preco_medio_pond = Number(existing.preco_medio_pond);
@@ -179,7 +184,12 @@ function Contagem() {
     if (!item) return toast.error("Faça a leitura de um produto primeiro.");
     const selected = await supabase.from('inventario_itens').select('*').eq('inventario_id', inventarioId).eq('produto', item.produto).maybeSingle();
     if (selected.error) return toast.error(selected.error.message);
-    if (!selected.data && inv?.origem_itens !== 'legado') return toast.error('Produto não selecionado para este inventário.');
+    if (!selected.data && !['legado', 'livre'].includes(inv?.origem_itens ?? '')) return toast.error('Produto não selecionado para este inventário.');
+    if (!selected.data && inv?.origem_itens === 'livre') {
+      item.quantidade_un = 0;
+      item.preco_medio_pond = 0;
+      item.localizacao = '';
+    }
     if (selected.data) {
       item.quantidade_un = Number(selected.data.quantidade_un_sistema);
       item.preco_medio_pond = Number(selected.data.preco_medio_pond);

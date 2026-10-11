@@ -37,14 +37,13 @@ export function InventorySetup({ onCreated }: { onCreated: (id: string) => void 
   };
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setError('');
-    if (!rows.length) return setError('Selecione produtos ou importe um Excel.');
     if (missing.length && !createMissing) return setError('Confirme o cadastro automático dos produtos novos.');
     if (missing.some(row => !row.designacao.trim())) return setError('Informe a descrição de todos os produtos novos.');
     setBusy(true);
     try {
       const result = await create({ data: { name, responsible, date, observation, source, rows, createMissing } });
       await Promise.all([queryClient.invalidateQueries({ queryKey: ['weight-inventories'] }), queryClient.invalidateQueries({ queryKey: ['weight-counting'] }), queryClient.invalidateQueries({ queryKey: inventorySetupOptions.queryKey })]);
-      toast.success('Inventário iniciado com os produtos selecionados.'); onCreated(result.id);
+      toast.success(rows.length ? 'Inventário iniciado com os produtos selecionados.' : 'Inventário iniciado.'); onCreated(result.id);
     } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível iniciar o inventário.'); }
     finally { setBusy(false); }
   };
@@ -74,6 +73,6 @@ export function InventorySetup({ onCreated }: { onCreated: (id: string) => void 
       {missing.length > 0 && <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="size-5 shrink-0 accent-primary" checked={createMissing} onChange={e => setCreateMissing(e.target.checked)} /><span>Cadastrar automaticamente os {missing.length} novos produtos, sem gravar quantidade, preço ou localização no cadastro.</span></label>}
     </fieldset>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-    <Button className="w-full h-12" disabled={busy || !rows.length || !catalog.data}><Play />{busy ? 'Processando…' : 'Iniciar inventário'}</Button>
+    <Button className="w-full h-12" disabled={busy}><Play />{busy ? 'Processando…' : 'Iniciar inventário'}</Button>
   </form>;
 }
