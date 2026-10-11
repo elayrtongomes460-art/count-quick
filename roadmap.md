@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Permitir iniciar inventário vazio e adicionar produtos por scanner ou Balança; verificar o fluxo.
 - [x] Separar cadastro permanente e dados do inventário, com seleção manual e importação Excel confirmada.
 - [x] Preservar referências do inventário nas contagens por scanner e Balança, histórico e PDF; testar os fluxos.
 - [x] Atualizar dependências com correções disponíveis, verificar lockfile, executar testes e confirmar compilação automática.

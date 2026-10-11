@@ -64,7 +64,7 @@ function Teste() {
   const filtered = useMemo(() => {
     const term = view === 'cadastro' || codeSearchOpen ? search.trim().toLocaleLowerCase() : '';
     return data.items.filter(i => {
-      const inInventory = !inventoryId || inventory.data?.inventory.origem_itens === 'legado' || inventory.data?.items.some(row => row.item_id === i.id);
+      const inInventory = !inventoryId || ['legado', 'livre'].includes(inventory.data?.inventory.origem_itens ?? '') || inventory.data?.items.some(row => row.item_id === i.id);
       const eligible = view === 'cadastro' || (data.weights.some(w => w.item_id === i.id) && inInventory);
       return eligible && (i.id === itemId || `${i.produto} ${i.part_number} ${i.designacao}`.toLocaleLowerCase().includes(term));
     });
