@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/historico")({
 type Inv = {
   id: string; nome_inventario: string; data: string; responsavel: string;
   observacao: string | null; status: string; finalized_at: string | null;
-  inventario_itens: { quantidade_contada: number; valor_divergencia: number }[];
+  inventario_itens: { quantidade_contada: number; valor_divergencia: number; contado: boolean }[];
 };
 
 function Historico() {
@@ -28,7 +28,7 @@ function Historico() {
     (async () => {
       const { data, error } = await supabase
         .from("inventarios")
-        .select("id,nome_inventario,data,responsavel,observacao,status,finalized_at,inventario_itens(quantidade_contada,valor_divergencia)")
+        .select("id,nome_inventario,data,responsavel,observacao,status,finalized_at,inventario_itens(quantidade_contada,valor_divergencia,contado)")
         .order("created_at", { ascending: false });
       if (!error) setList((data ?? []) as Inv[]);
       setLoading(false);
@@ -69,7 +69,7 @@ function Historico() {
       {loading && <p className="text-muted-foreground text-sm">Carregando…</p>}
       <ul className="space-y-2">
         {filtered.map(inv => {
-          const total = inv.inventario_itens.length;
+          const total = inv.inventario_itens.filter(i => i.contado).length;
           const totalDiv = inv.inventario_itens.reduce((s, x) => s + Number(x.valor_divergencia), 0);
           return (
             <li key={inv.id} className="bg-card border border-border rounded-xl active:scale-[0.99]">

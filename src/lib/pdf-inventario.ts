@@ -18,6 +18,7 @@ export type InvForPdf = {
 };
 
 export type InvItemForPdf = {
+  contado?: boolean;
   produto: string;
   part_number: string | null;
   designacao: string | null;
@@ -182,10 +183,10 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
   // Métricas
   const totalItens = itens.length;
   const comDif = itens.filter(i => Number(i.diferenca) !== 0).length;
-  const semDif = totalItens - comDif;
+  const semDif = itens.filter(i => i.contado !== false && Number(i.diferenca) === 0).length;
   const nSobra = itens.filter(i => Number(i.diferenca) > 0).length;
   const nFalta = itens.filter(i => Number(i.diferenca) < 0).length;
-  const conferidos = totalItens;
+  const conferidos = itens.filter(i => i.contado !== false).length;
   const pctConf = totalItens > 0 ? (conferidos / totalItens) * 100 : 0;
   const pctSobra = totalItens > 0 ? (nSobra / totalItens) * 100 : 0;
   const pctFalta = totalItens > 0 ? (nFalta / totalItens) * 100 : 0;
@@ -508,13 +509,13 @@ export async function gerarPdfInventario(inv: InvForPdf, itens: InvItemForPdf[])
       const vs = Number(i.quantidade_un_sistema) * Number(i.preco_medio_pond);
       const vc = Number(i.quantidade_contada) * Number(i.preco_medio_pond);
       const d = Number(i.diferenca);
-      const status = d === 0 ? "OK" : d > 0 ? "SOBRA" : "FALTA";
+      const status = i.contado === false ? "PENDENTE" : d === 0 ? "OK" : d > 0 ? "SOBRA" : "FALTA";
       return [
         i.produto, i.part_number || "-", i.designacao || "",
         i.localizacao || "-", i.unidade_un || "-",
-        num(i.quantidade_un_sistema, 0), num(i.quantidade_contada, 0),
-        (d > 0 ? "+" : "") + num(d, 0),
-        brl(i.preco_medio_pond), brl(vs), brl(vc), brl(i.valor_divergencia), status,
+        num(i.quantidade_un_sistema, 0), i.contado === false ? "—" : num(i.quantidade_contada, 0),
+        i.contado === false ? "—" : (d > 0 ? "+" : "") + num(d, 0),
+        brl(i.preco_medio_pond), brl(vs), i.contado === false ? "—" : brl(vc), i.contado === false ? "—" : brl(i.valor_divergencia), status,
       ];
     }),
     foot: [[

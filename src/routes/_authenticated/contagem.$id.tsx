@@ -17,6 +17,7 @@ type Item = {
   quantidade_un: number; unidade_un: string; localizacao: string; preco_medio_pond: number;
 };
 type InvItem = {
+  contado: boolean;
   id: string; produto: string; quantidade_un_sistema: number; quantidade_contada: number;
   diferenca: number; unidade_un: string | null; localizacao: string | null;
   designacao: string | null; part_number: string | null; preco_medio_pond: number; valor_divergencia: number;
@@ -176,6 +177,14 @@ function Contagem() {
 
   const salvar = async () => {
     if (!item) return toast.error("Faça a leitura de um produto primeiro.");
+    const selected = await supabase.from('inventario_itens').select('*').eq('inventario_id', inventarioId).eq('produto', item.produto).maybeSingle();
+    if (selected.error) return toast.error(selected.error.message);
+    if (!selected.data && inv?.origem_itens !== 'legado') return toast.error('Produto não selecionado para este inventário.');
+    if (selected.data) {
+      item.quantidade_un = Number(selected.data.quantidade_un_sistema);
+      item.preco_medio_pond = Number(selected.data.preco_medio_pond);
+      item.localizacao = selected.data.localizacao ?? '';
+    }
     const qc = Number(qtdContada.replace(",", "."));
     if (Number.isNaN(qc)) return toast.error("Informe a quantidade contada.");
     const diferenca = qc - Number(item.quantidade_un);
@@ -409,7 +418,7 @@ function ContadosList({
     const diferenca = qc - Number(it.quantidade_un_sistema);
     const valor_divergencia = diferenca * Number(it.preco_medio_pond);
     const { error } = await supabase.from("inventario_itens").update({
-      quantidade_contada: qc, diferenca, valor_divergencia,
+      quantidade_contada: qc, diferenca, valor_divergencia, contado: true,
     }).eq("id", it.id);
     if (error) return toast.error(error.message);
     onChange();
@@ -437,7 +446,7 @@ function ContadosList({
                     <div className="text-sm truncate">{i.designacao}</div>
                     <div className="text-xs text-muted-foreground mt-0.5 flex gap-x-3 flex-wrap">
                       <span>Sist: {num(i.quantidade_un_sistema, 0)}</span>
-                      <span>Cont: {num(i.quantidade_contada, 0)}</span>
+                      <span>{i.contado ? `Cont: ${num(i.quantidade_contada, 0)}` : 'Pendente'}</span>
                       <span className={dif === 0 ? "" : "font-semibold text-destructive"}>Dif: {dif > 0 ? "+" : ""}{num(dif, 0)}</span>
                       <span>{brl(i.valor_divergencia)}</span>
                     </div>
