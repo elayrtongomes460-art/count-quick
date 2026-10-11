@@ -34,7 +34,7 @@ function Contagem() {
   const produtoRef = useRef<HTMLInputElement>(null);
   const qtdRef = useRef<HTMLInputElement>(null);
 
-  const [inv, setInv] = useState<{ nome_inventario: string; status: string } | null>(null);
+  const [inv, setInv] = useState<{ nome_inventario: string; status: string; origem_itens: string } | null>(null);
   const [produto, setProduto] = useState("");
   const [item, setItem] = useState<Item | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -49,7 +49,7 @@ function Contagem() {
   const processingRef = useRef<boolean>(false);
 
   const loadInv = useCallback(async () => {
-    const { data } = await supabase.from("inventarios").select("nome_inventario,status").eq("id", inventarioId).single();
+    const { data } = await supabase.from("inventarios").select("nome_inventario,status,origem_itens").eq("id", inventarioId).single();
     setInv(data);
   }, [inventarioId]);
 
@@ -92,11 +92,20 @@ function Contagem() {
       // busca a quantidade atual DIRETO no banco para evitar estado defasado entre bipadas rápidas
       const { data: existing } = await supabase
         .from("inventario_itens")
-        .select("quantidade_contada")
+        .select("*")
         .eq("inventario_id", inventarioId)
         .eq("produto", itemData.produto)
         .maybeSingle();
-      const novaQtd = existing ? Number(existing.quantidade_contada) + 1 : 1;
+      if (!existing && inv?.origem_itens !== 'legado') { toast.error('Produto não selecionado para este inventário.'); return; }
+      if (existing) {
+        itemData.quantidade_un = Number(existing.quantidade_un_sistema);
+        itemData.preco_medio_pond = Number(existing.preco_medio_pond);
+        itemData.localizacao = existing.localizacao ?? '';
+        itemData.unidade_un = existing.unidade_un ?? 'UN';
+        itemData.designacao = existing.designacao ?? itemData.designacao;
+        itemData.part_number = existing.part_number;
+      }
+      const novaQtd = existing?.contado ? Number(existing.quantidade_contada) + 1 : 1;
       const diferenca = novaQtd - Number(itemData.quantidade_un);
       const valor_divergencia = diferenca * Number(itemData.preco_medio_pond);
       const payload = {
@@ -110,6 +119,7 @@ function Contagem() {
         localizacao: itemData.localizacao,
         preco_medio_pond: itemData.preco_medio_pond,
         quantidade_contada: novaQtd,
+        contado: true,
         diferenca,
         valor_divergencia,
       };
@@ -131,7 +141,7 @@ function Contagem() {
       pendingCodigoRef.current = "";
       if (pending && pending !== codigo) void buscar(pending);
     }
-  }, [inventarioId, loadContados]);
+  }, [inventarioId, loadContados, inv]);
 
   const onProdutoChange = (v: string) => {
     setProduto(v);
@@ -181,6 +191,7 @@ function Contagem() {
       localizacao: item.localizacao,
       preco_medio_pond: item.preco_medio_pond,
       quantidade_contada: qc,
+      contado: true,
       diferenca,
       valor_divergencia,
     };

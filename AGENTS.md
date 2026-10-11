@@ -17,3 +17,5 @@
 - Keep Android packaging in android-apk as a thin HTTPS WebView client of the published app; this preserves TanStack server functions and existing inventory workflows without duplicating them.
 - Install SheetJS from its official versioned distribution URL; the npm xlsx release does not contain the required security fixes.
 - Use the shared CSV serializer for item and inventory exports; neutralize formula-like text at export time while preserving numeric quantities and stored catalog data.
+- Create selected/imported inventory rows atomically through an authenticated invoker RPC and the shared InventorySetup form; keep product identity separate from reference quantities, prices and locations, and preserve those snapshots across scanner and weight recounts.
+- Use inventory-item counted state to distinguish selected pending rows from confirmed zero counts; existing rows default to counted so historical reports remain unchanged.
