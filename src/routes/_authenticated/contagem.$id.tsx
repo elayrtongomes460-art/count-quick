@@ -325,7 +325,7 @@ function Contagem() {
               <div className="grid grid-cols-3 gap-2">
                 <Mini k="Qtd sistema" v={`${num(item.quantidade_un, 0)} ${item.unidade_un}`} />
                 <Mini k="Localização" v={item.localizacao || "—"} />
-                <Mini k="Preço médio" v={brl(item.preco_medio_pond)} />
+                <Mini k="Preço médio ponderado" v={brl(item.preco_medio_pond)} />
               </div>
             </div>
 
@@ -401,7 +401,7 @@ function Mini({ k, v }: { k: string; v: string }) {
   return (
     <div className="bg-muted rounded-md p-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{k}</div>
-      <div className="text-sm font-semibold truncate">{v}</div>
+      <div className="text-sm font-semibold break-words">{v}</div>
     </div>
   );
 }
