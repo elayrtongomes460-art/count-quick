@@ -75,8 +75,8 @@ function ItensPage() {
   };
 
   const exportCsv = () => {
-    const header = ["Produto","Part_Number","Designacao","Especificacoes","Unidade_UN"];
-    const rows = itens.map(i => [i.produto, i.part_number ?? "", i.designacao, i.especificacoes, i.unidade_un]);
+    const header = ["Produto","Part_Number","Designacao","Especificacoes","Unidade_UN","Localizacao","Preco_Medio_Pond"];
+    const rows = itens.map(i => [i.produto, i.part_number ?? "", i.designacao, i.especificacoes, i.unidade_un, i.localizacao, i.preco_medio_pond]);
     const csv = serializeCsv([header, ...rows]);
     const blob = new Blob(["\ufeff"+csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
@@ -103,6 +103,8 @@ function ItensPage() {
           part_number: normalizeCodigo(row.part_number),
           designacao: String(row.designacao ?? "").trim(),
           unidade_un: normalizeCodigo(row.unidade_un) || "UN",
+          localizacao: String(row.localizacao ?? "").trim(),
+          preco_medio_pond: row.preco_medio_pond,
 
         };
         const { error } = await supabase.from("itens").upsert(payload, { onConflict: "produto" });
@@ -174,7 +176,7 @@ function ItensPage() {
         </button>
 
         <div className="text-[11px] text-muted-foreground px-1 -mt-1">
-          Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, unidade_un. Quantidade, preço e localização são importados ao iniciar um inventário.
+          Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, unidade_un, localizacao, preco_medio_pond. Quantidade é importada ao iniciar um inventário.
         </div>
 
         <div className="text-xs text-muted-foreground px-1">
@@ -192,6 +194,10 @@ function ItensPage() {
                     {i.part_number && <span>PN: {i.part_number}</span>}
                     <span>{i.unidade_un}</span>
                     {i.especificacoes && <span>{i.especificacoes}</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                    <span className="break-all">Localização: {i.localizacao || "—"}</span>
+                    <span>Preço médio ponderado: {brl(i.preco_medio_pond)}</span>
                   </div>
                 </div>
                 <button onClick={() => { setEditing(i); setShowForm(true); }} className="p-2 rounded-md bg-secondary"><Pencil className="size-4" /></button>
@@ -227,6 +233,7 @@ function ItemForm({ initial, onClose, onSaved }: { initial: Item; onClose: () =>
     e.preventDefault();
     if (!f.produto.trim()) return toast.error("Produto é obrigatório.");
     if (!f.designacao.trim()) return toast.error("Designação é obrigatória.");
+    if (!Number.isFinite(f.preco_medio_pond) || f.preco_medio_pond < 0) return toast.error("Informe um preço médio ponderado válido, igual ou maior que zero.");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     const payload = {
@@ -235,6 +242,8 @@ function ItemForm({ initial, onClose, onSaved }: { initial: Item; onClose: () =>
       designacao: f.designacao.trim(),
       especificacoes: f.especificacoes?.trim() ?? "",
       unidade_un: normalizeCodigo(f.unidade_un) || "UN",
+      localizacao: f.localizacao.trim(),
+      preco_medio_pond: f.preco_medio_pond,
       created_by: u.user?.id,
     };
     const { error } = isEdit
@@ -263,6 +272,8 @@ function ItemForm({ initial, onClose, onSaved }: { initial: Item; onClose: () =>
           <FF label="Designação" required><input className="ipt" value={f.designacao} onChange={e => set("designacao", e.target.value)} /></FF>
           <FF label="Especificações"><textarea className="ipt" value={f.especificacoes ?? ""} onChange={e => set("especificacoes", e.target.value)} /></FF>
           <FF label="Unidade UN"><input className="ipt" value={f.unidade_un} onChange={e => set("unidade_un", e.target.value)} /></FF>
+          <FF label="Localização"><input className="ipt" value={f.localizacao} onChange={e => set("localizacao", e.target.value)} /></FF>
+          <FF label="Preço médio ponderado (R$)"><input className="ipt" type="number" min="0" step="any" inputMode="decimal" value={f.preco_medio_pond} onChange={e => set("preco_medio_pond", Number(e.target.value))} /></FF>
 
           <button type="submit" disabled={saving} className="w-full bg-primary text-primary-foreground py-3.5 rounded-lg font-semibold mt-2 disabled:opacity-60">
             {saving ? "Salvando…" : "Salvar"}
