@@ -1,5 +1,5 @@
 # Tasks
-- [ ] Restaurar localização e preço médio ponderado no cadastro e manter sua exibição na contagem, preservando referências dos inventários.
+- [x] Restaurar localização e preço médio ponderado no cadastro e manter sua exibição na contagem, preservando referências dos inventários.
 - [x] Permitir iniciar inventário vazio e adicionar produtos por scanner ou Balança; verificar o fluxo.
 - [x] Separar cadastro permanente e dados do inventário, com seleção manual e importação Excel confirmada.
 - [x] Preservar referências do inventário nas contagens por scanner e Balança, histórico e PDF; testar os fluxos.
