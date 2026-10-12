@@ -20,3 +20,4 @@
 - Create selected/imported inventory rows atomically through an authenticated invoker RPC and the shared InventorySetup form; keep product identity separate from reference quantities, prices and locations, and preserve those snapshots across scanner and weight recounts.
 - Use inventory-item counted state to distinguish selected pending rows from confirmed zero counts; existing rows default to counted so historical reports remain unchanged.
 - Create empty inventories through the authenticated setup action with free-entry origin; scanner and weight counts append catalog products with zero reference values without copying deprecated stock fields.
+- Fetch the item catalog in explicitly ranged, stably ordered pages before local search or export; this avoids silently truncating catalogs at the Data API row limit.
