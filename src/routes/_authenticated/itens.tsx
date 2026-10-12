@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { brl, num } from "@/lib/format";
 import { Pencil, Plus, Search, Trash2, X, Download, Upload, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import { parseItensFile } from "@/lib/import-itens";
 import { serializeCsv } from "@/lib/csv";
+import { readAllPages } from '@/lib/paged-read';
+import { ListPagination } from '@/components/ListPagination';
 
 export const Route = createFileRoute("/_authenticated/itens")({
   head: () => ({ meta: [{"title": "Cadastro de Itens — Inventário"}, {"name": "description", "content": "Cadastro permanente de códigos, descrições e especificações de produtos."}, {"property": "og:title", "content": "Cadastro de Itens — Inventário"}, {"property": "og:description", "content": "Cadastro permanente de códigos, descrições e especificações de produtos."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
@@ -40,6 +43,14 @@ function ItensPage() {
   const [itens, setItens] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q);
+  const [page, setPage] = useState(0);
+  const pageSize = 50;
+  const queryClient = useQueryClient();
+  const invalidateCatalog = () => {
+    void queryClient.invalidateQueries({ queryKey: ['inventory-setup-catalog'] });
+    void queryClient.invalidateQueries({ queryKey: ['weight-counting'] });
+  };
   const [editing, setEditing] = useState<Item | null>(null);
   const [showForm, setShowForm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -47,14 +58,7 @@ function ItensPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const all: Item[] = [];
-      const pageSize = 1000;
-      for (let offset = 0; ; offset += pageSize) {
-        const { data, error } = await supabase.from("itens").select("*").order("produto").order("id").range(offset, offset + pageSize - 1);
-        if (error) throw error;
-        all.push(...((data ?? []) as Item[]));
-        if (!data || data.length < pageSize) break;
-      }
+      const all = await readAllPages((from, to) => supabase.from("itens").select("id,produto,part_number,designacao,especificacoes,quantidade_un,unidade_un,localizacao,preco_medio_pond").order("produto").order("id").range(from, to));
       setItens(all);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível carregar todos os itens. Tente novamente.");
@@ -63,17 +67,16 @@ function ItensPage() {
     }
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => setPage(0), [deferredQ]);
 
+  const searchIndex = useMemo(() => itens.map(item => ({ item, text: `${item.produto} ${item.part_number ?? ''} ${item.designacao}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() })), [itens]);
   const filtered = useMemo(() => {
     const normalizeSearch = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-    const s = normalizeSearch(q);
+    const s = normalizeSearch(deferredQ);
     if (!s) return itens;
-    return itens.filter(i =>
-      normalizeSearch(i.produto).includes(s) ||
-      normalizeSearch(i.part_number ?? "").includes(s) ||
-      normalizeSearch(i.designacao).includes(s)
-    );
-  }, [q, itens]);
+    return searchIndex.filter(entry => entry.text.includes(s)).map(entry => entry.item);
+  }, [deferredQ, itens, searchIndex]);
+  const safePage = Math.min(page, Math.max(0, Math.ceil(filtered.length / pageSize) - 1));
 
   const remover = async (i: Item) => {
     if (!confirm(`Excluir item "${i.produto}"?`)) return;
@@ -83,7 +86,8 @@ function ItensPage() {
       return toast.error(error.message);
     }
     toast.success("Item excluído.");
-    load();
+    setItens(current => current.filter(item => item.id !== i.id));
+    invalidateCatalog();
   };
 
   const exportCsv = () => {
@@ -125,6 +129,7 @@ function ItensPage() {
         else ok++;
       }
       toast.success(`Importado: ${ok} novo(s), ${upd} atualizado(s), ${err} erro(s).`, { id: "imp" });
+      invalidateCatalog();
       load();
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao importar.", { id: "imp" });
@@ -146,7 +151,8 @@ function ItensPage() {
       return toast.error(error.message, { id: "clr" });
     }
     toast.success(`Todos os ${itens.length} códigos foram excluídos.`, { id: "clr" });
-    load();
+    setItens([]);
+    invalidateCatalog();
   };
 
 
@@ -196,7 +202,7 @@ function ItensPage() {
         </div>
 
         <ul className="space-y-2">
-          {filtered.map(i => (
+          {filtered.slice(safePage * pageSize, (safePage + 1) * pageSize).map(i => (
             <li key={i.id} className="bg-card border border-border rounded-xl p-3">
               <div className="flex items-start gap-2">
                 <div className="flex-1 min-w-0">
@@ -221,13 +227,14 @@ function ItensPage() {
             <li className="text-center text-muted-foreground py-10">Nenhum item encontrado.</li>
           )}
         </ul>
+        <ListPagination page={safePage} total={filtered.length} pageSize={pageSize} onChange={setPage} />
       </div>
 
       {showForm && (
         <ItemForm
           initial={editing ?? { id: "", ...empty }}
           onClose={() => setShowForm(false)}
-          onSaved={() => { setShowForm(false); load(); }}
+          onSaved={() => { setShowForm(false); invalidateCatalog(); void load(); }}
         />
       )}
     </AppShell>
