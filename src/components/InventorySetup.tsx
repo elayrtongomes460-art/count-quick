@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { inventorySetupOptions } from '@/lib/inventory-setup.queries';
 import { createInventoryWithItems } from '@/lib/inventory-setup.functions';
 import { emptyInventoryRow, parseInventoryExcel, type InventoryRow } from '@/lib/inventory-setup';
+import { sortInventoryRows } from '@/lib/inventory-order';
 
 const inputClass = 'w-full min-w-0 rounded-md border border-input bg-card px-3 py-2.5 text-base';
 export function InventorySetup({ onCreated }: { onCreated: (id: string) => void }) {
@@ -31,7 +32,7 @@ export function InventorySetup({ onCreated }: { onCreated: (id: string) => void 
   const update = (code: string, patch: Partial<InventoryRow>) => setRows(current => current.map(row => row.produto === code ? { ...row, ...patch } : row));
   const importFile = async (file: File) => {
     setBusy(true); setError('');
-    try { setRows(await parseInventoryExcel(file)); setCreateMissing(false); }
+    try { setRows(sortInventoryRows(await parseInventoryExcel(file))); setCreateMissing(false); }
     catch (e) { setRows([]); setError(e instanceof Error ? e.message : 'Não foi possível ler o Excel.'); }
     finally { setBusy(false); }
   };
