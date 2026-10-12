@@ -46,20 +46,32 @@ function ItensPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("itens").select("*").order("produto");
-    if (error) toast.error(error.message);
-    setItens((data ?? []) as Item[]);
-    setLoading(false);
+    try {
+      const all: Item[] = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase.from("itens").select("*").order("produto").order("id").range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        all.push(...((data ?? []) as Item[]));
+        if (!data || data.length < pageSize) break;
+      }
+      setItens(all);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível carregar todos os itens. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
+    const normalizeSearch = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    const s = normalizeSearch(q);
     if (!s) return itens;
     return itens.filter(i =>
-      i.produto.toLowerCase().includes(s) ||
-      (i.part_number ?? "").toLowerCase().includes(s) ||
-      i.designacao.toLowerCase().includes(s)
+      normalizeSearch(i.produto).includes(s) ||
+      normalizeSearch(i.part_number ?? "").includes(s) ||
+      normalizeSearch(i.designacao).includes(s)
     );
   }, [q, itens]);
 
