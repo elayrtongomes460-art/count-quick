@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Adicionar lista completa ao lado do botão amarelo, com contados, pendentes, quantidades e localização; verificar sem alterar contagens.
 - [x] Recuperar localização e preço médio ponderado da planilha original nos produtos, preservando quantidades e inventários.
 - [x] Corrigir carregamento completo do catálogo e verificar busca por itens além dos primeiros 1.000 registros.
 - [x] Restaurar localização e preço médio ponderado no cadastro e manter sua exibição na contagem, preservando referências dos inventários.

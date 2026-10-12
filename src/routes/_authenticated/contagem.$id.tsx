@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, num } from "@/lib/format";
 import { toast } from "sonner";
-import { Check, CheckCircle2, Eraser, ListChecks, Plus, ScanLine } from "lucide-react";
+import { Check, CheckCircle2, ClipboardList, Eraser, ListChecks, Plus, ScanLine } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
+import { InventoryProgressList } from "@/components/InventoryProgressList";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/contagem/$id")({
   head: () => ({ meta: [{"title": "Contagem por Scanner — Inventário"}, {"name": "description", "content": "Conferência de produtos e quantidades por leitura de códigos."}, {"property": "og:title", "content": "Contagem por Scanner — Inventário"}, {"property": "og:description", "content": "Conferência de produtos e quantidades por leitura de códigos."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
@@ -42,6 +44,9 @@ function Contagem() {
   const [qtdContada, setQtdContada] = useState("");
   const [contados, setContados] = useState<InvItem[]>([]);
   const [showList, setShowList] = useState(false);
+  const [showInventoryList, setShowInventoryList] = useState(false);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [showSig, setShowSig] = useState(false);
   const scanBufferRef = useRef<string>("");
   const lastKeyTimeRef = useRef<number>(0);
@@ -55,8 +60,23 @@ function Contagem() {
   }, [inventarioId]);
 
   const loadContados = useCallback(async () => {
-    const { data } = await supabase.from("inventario_itens").select("*").eq("inventario_id", inventarioId).order("created_at", { ascending: false });
-    setContados((data ?? []) as InvItem[]);
+    setListLoading(true);
+    setListError(null);
+    try {
+      const rows: InvItem[] = [];
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error } = await supabase.from("inventario_itens").select("*").eq("inventario_id", inventarioId)
+          .order("created_at", { ascending: false }).order("id").range(offset, offset + 999);
+        if (error) throw error;
+        rows.push(...(data ?? []) as InvItem[]);
+        if ((data?.length ?? 0) < 1000) break;
+      }
+      setContados(rows);
+    } catch {
+      setListError("Não foi possível carregar os itens. Feche a lista e tente novamente.");
+    } finally {
+      setListLoading(false);
+    }
   }, [inventarioId]);
 
   useEffect(() => { loadInv(); loadContados(); }, [loadInv, loadContados]);
@@ -271,10 +291,15 @@ function Contagem() {
     <AppShell
       title={inv?.nome_inventario ?? "Contagem"}
       action={
-        <button onClick={() => setShowList(true)} className="p-2 rounded-md bg-accent text-accent-foreground" aria-label="Itens contados">
-          <ListChecks className="size-5" />
-          <span className="sr-only">{contados.length}</span>
-        </button>
+        <div className="flex gap-2">
+          <Button size="icon" onClick={() => setShowList(true)} className="bg-accent text-accent-foreground hover:bg-accent/90" aria-label="Itens contados" title="Itens contados">
+            <ListChecks className="size-5" />
+            <span className="sr-only">{contados.length}</span>
+          </Button>
+          <Button size="icon" variant="secondary" onClick={() => { setShowInventoryList(true); void loadContados(); }} aria-label="Itens do inventário" title="Itens do inventário">
+            <ClipboardList className="size-5" />
+          </Button>
+        </div>
       }
     >
       {finalizado && (
@@ -378,6 +403,8 @@ function Contagem() {
           finalizado={finalizado}
         />
       )}
+
+      {showInventoryList && <InventoryProgressList items={contados} loading={listLoading} error={listError} name={inv?.nome_inventario ?? "Inventário"} onClose={() => { setShowInventoryList(false); produtoRef.current?.focus(); }} />}
 
       <SignaturePad
         open={showSig}
