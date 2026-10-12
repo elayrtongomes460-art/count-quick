@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { brl } from '@/lib/format';
 import { inventoryProgress, remainingQuantity, type ProgressItem } from '@/lib/inventory-progress';
+import { sortInventoryRows, type InventoryOrder } from '@/lib/inventory-order';
 
 type InventoryRow = ProgressItem & {
   id: string; produto: string; designacao: string | null; part_number: string | null;
@@ -19,12 +20,13 @@ export function InventoryProgressList({ items, loading, error, onClose, name }: 
 }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [order, setOrder] = useState<InventoryOrder>('produto');
   const progress = inventoryProgress(items);
   const query = normalize(search);
-  const visible = items.filter(row =>
+  const visible = sortInventoryRows(items.filter(row =>
     (filter === 'all' || (filter === 'counted' ? row.contado : !row.contado)) &&
     normalize([row.produto, row.designacao, row.part_number, row.localizacao].join(' ')).includes(query)
-  );
+  ), order);
   return (
     <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
       <DialogContent className="flex flex-col w-[calc(100%-1rem)] max-w-3xl max-h-[90dvh] gap-3 p-4 rounded-lg overflow-hidden">
@@ -48,6 +50,13 @@ export function InventoryProgressList({ items, loading, error, onClose, name }: 
             <TabsTrigger value="pending" className="px-1">Pendentes</TabsTrigger>
           </TabsList>
         </Tabs>
+        <label className="flex items-center gap-2 text-sm shrink-0">
+          <span className="text-muted-foreground">Ordenar por</span>
+          <select aria-label="Ordenar itens" value={order} onChange={event => setOrder(event.target.value === 'localizacao' ? 'localizacao' : 'produto')} className="min-w-0 flex-1 h-10 rounded-md border border-input bg-card px-3 text-foreground">
+            <option value="produto">Código do produto</option>
+            <option value="localizacao">Localização</option>
+          </select>
+        </label>
         <div className="min-h-0 overflow-y-auto flex-1 space-y-2" role="region" aria-label="Lista de itens do inventário">
           {loading && <p role="status" className="py-8 text-center text-muted-foreground">Carregando itens…</p>}
           {!loading && error && <p role="alert" className="py-6 text-center text-destructive">{error}</p>}
