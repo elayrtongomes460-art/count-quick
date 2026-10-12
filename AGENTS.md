@@ -21,5 +21,7 @@
 - Use inventory-item counted state to distinguish selected pending rows from confirmed zero counts; existing rows default to counted so historical reports remain unchanged.
 - Create empty inventories through the authenticated setup action with free-entry origin; scanner and weight counts append catalog products with zero reference values without copying deprecated stock fields.
 - Fetch the item catalog in explicitly ranged, stably ordered pages before local search or export; this avoids silently truncating catalogs at the Data API row limit.
+- Read complete catalogs with bounded parallel pagination and render large catalog/selection forms in small pages; this reduces network waterfalls and input lag while keeping all rows searchable, selectable and exportable.
+- Keep catalog query data fresh for five minutes and invalidate it after catalog mutations; this avoids redundant reloads without retaining stale product edits.
 - Show scanner inventory progress in a separate read-only list using paginated inventory snapshots and counted state, not catalog stock; this preserves imported references and existing counting actions.
 - Use the shared natural-order comparator for imported inventory previews and progress lists; this orders numeric code and location segments without modifying snapshots or counts.

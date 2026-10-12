@@ -1,16 +1,13 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { readAllPages } from '@/lib/paged-read';
 
 export const inventorySetupCatalog = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
-  const items = [];
-  for (let offset = 0; ; offset += 1000) {
-    const result = await context.supabase.from('itens').select('id,produto,part_number,designacao,especificacoes,unidade_un').order('produto').order('id').range(offset, offset + 999);
-    if (result.error) throw new Error('Não foi possível carregar os produtos.');
-    items.push(...result.data);
-    if (result.data.length < 1000) break;
-  }
-  const profile = await context.supabase.from('profiles').select('nome').eq('id', context.userId).maybeSingle();
+  const [items, profile] = await Promise.all([
+    readAllPages((from, to) => context.supabase.from('itens').select('id,produto,part_number,designacao,especificacoes,unidade_un').order('produto').order('id').range(from, to)),
+    context.supabase.from('profiles').select('nome').eq('id', context.userId).maybeSingle(),
+  ]);
   return { items, responsible: profile.data?.nome ?? '' };
 });
 
