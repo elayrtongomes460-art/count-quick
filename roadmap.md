@@ -1,5 +1,5 @@
 # Tasks
-- [ ] Reduzir carregamentos sequenciais e renderização de listas grandes; verificar busca completa, criação de inventário e navegação.
+- [x] Reduzir carregamentos sequenciais e renderização de listas grandes; verificar busca completa, criação de inventário e navegação.
 - [x] Ordenar itens importados por código e oferecer ordem por localização na lista; verificar sem modificar referências.
 - [x] Adicionar lista completa ao lado do botão amarelo, com contados, pendentes, quantidades e localização; verificar sem alterar contagens.
 - [x] Recuperar localização e preço médio ponderado da planilha original nos produtos, preservando quantidades e inventários.
