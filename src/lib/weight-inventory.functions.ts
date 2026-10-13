@@ -2,11 +2,13 @@ import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { countByWeight } from './weight-counting';
+import { readAllPages } from './paged-read';
 
 export const listWeightInventories = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase.from('inventarios').select('*').eq('user_id', context.userId).eq('status', 'Em andamento').order('created_at', { ascending: false });
+  .inputValidator(z.object({ includeFinalized: z.boolean().default(false) }).default({ includeFinalized: false }))
+  .handler(async ({ context, data: options }) => {
+    const { data, error } = await context.supabase.from('inventarios').select('*').eq('user_id', context.userId).in('status', options.includeFinalized ? ['Em andamento', 'Finalizado'] : ['Em andamento']).order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
     const profile = await context.supabase.from('profiles').select('nome').eq('id', context.userId).maybeSingle();
     return { inventories: data, responsible: profile.data?.nome ?? '' };
@@ -18,9 +20,8 @@ export const getWeightInventory = createServerFn({ method: 'GET' })
   .handler(async ({ data, context }) => {
     const inventory = await context.supabase.from('inventarios').select('*').eq('id', data.id).eq('user_id', context.userId).single();
     if (inventory.error) throw new Error('Inventário não encontrado.');
-    const items = await context.supabase.from('inventario_itens').select('*').eq('inventario_id', data.id).order('produto');
-    if (items.error) throw new Error(items.error.message);
-    return { inventory: inventory.data, items: items.data };
+    const items = await readAllPages((from, to) => context.supabase.from('inventario_itens').select('*').eq('inventario_id', data.id).order('produto').order('id').range(from, to));
+    return { inventory: inventory.data, items };
   });
 
 export const startWeightInventory = createServerFn({ method: 'POST' })
@@ -37,7 +38,8 @@ export const saveWeightInventoryItem = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ inventoryId: z.string().uuid(), itemId: z.string().uuid(), grossG: z.number().finite().nonnegative(), replace: z.boolean().default(false) }))
   .handler(async ({ data, context }) => {
     const inventory = await context.supabase.from('inventarios').select('status,origem_itens').eq('id', data.inventoryId).eq('user_id', context.userId).single();
-    if (inventory.error || inventory.data.status !== 'Em andamento') throw new Error('Selecione um inventário em andamento.');
+    if (inventory.error || !['Em andamento', 'Finalizado'].includes(inventory.data.status)) throw new Error('Selecione um inventário válido.');
+    const finalized = inventory.data.status === 'Finalizado';
     const item = await context.supabase.from('itens').select('*').eq('id', data.itemId).single();
     if (item.error) throw new Error('Produto não encontrado.');
     const weight = await context.supabase.from('item_pesos').select('*').eq('user_id', context.userId).eq('item_id', data.itemId).single();
@@ -46,12 +48,13 @@ export const saveWeightInventoryItem = createServerFn({ method: 'POST' })
     if (!result || !Number.isSafeInteger(result.quantity)) throw new Error('Pesagem inválida.');
     const existing = await context.supabase.from('inventario_itens').select('*').eq('inventario_id', data.inventoryId).eq('produto', item.data.produto).maybeSingle();
     if (existing.error) throw new Error(existing.error.message);
-    if (!existing.data && !['legado', 'livre'].includes(inventory.data.origem_itens)) throw new Error('Este produto não foi selecionado para o inventário.');
+    if (!existing.data && !finalized && !['legado', 'livre'].includes(inventory.data.origem_itens)) throw new Error('Este produto não foi selecionado para o inventário.');
     if (existing.data?.contado && !data.replace) return { needsConfirmation: true, quantity: result.quantity };
-    const baseline = Number(existing.data?.quantidade_un_sistema ?? (inventory.data.origem_itens === 'livre' ? 0 : item.data.quantidade_un));
-    const price = Number(existing.data?.preco_medio_pond ?? (inventory.data.origem_itens === 'livre' ? 0 : item.data.preco_medio_pond));
+    const zeroReference = finalized || inventory.data.origem_itens === 'livre';
+    const baseline = Number(existing.data?.quantidade_un_sistema ?? (zeroReference ? 0 : item.data.quantidade_un));
+    const price = Number(existing.data?.preco_medio_pond ?? (zeroReference ? 0 : item.data.preco_medio_pond));
     const difference = result.quantity - baseline;
-    const payload = { inventario_id: data.inventoryId, item_id: item.data.id, produto: item.data.produto, part_number: existing.data?.part_number ?? item.data.part_number, designacao: existing.data?.designacao ?? item.data.designacao, quantidade_un_sistema: baseline, unidade_un: existing.data?.unidade_un ?? item.data.unidade_un, localizacao: existing.data?.localizacao ?? (inventory.data.origem_itens === 'livre' ? '' : item.data.localizacao), preco_medio_pond: price, quantidade_contada: result.quantity, diferenca: difference, valor_divergencia: difference * price, contado: true };
+    const payload = { inventario_id: data.inventoryId, item_id: item.data.id, produto: item.data.produto, part_number: existing.data?.part_number ?? item.data.part_number, designacao: existing.data?.designacao ?? item.data.designacao, quantidade_un_sistema: baseline, unidade_un: existing.data?.unidade_un ?? item.data.unidade_un, localizacao: existing.data?.localizacao ?? (zeroReference ? '' : item.data.localizacao), preco_medio_pond: price, quantidade_contada: result.quantity, diferenca: difference, valor_divergencia: difference * price, contado: true };
     const saved = await context.supabase.from('inventario_itens').upsert(payload, { onConflict: 'inventario_id,produto' });
     if (saved.error) throw new Error(saved.error.message);
     return { needsConfirmation: false, quantity: result.quantity };

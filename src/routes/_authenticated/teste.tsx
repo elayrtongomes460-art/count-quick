@@ -12,7 +12,7 @@ import { weightCountingOptions } from '@/lib/weight-counting.queries';
 import { countByWeight, parseWeight } from '@/lib/weight-counting';
 import { brl } from '@/lib/format';
 import { WeightInventoryPanel } from '@/components/WeightInventoryPanel';
-import { weightInventoriesOptions, weightInventoryOptions } from '@/lib/weight-inventory.queries';
+import { allWeightInventoriesOptions, weightInventoryOptions } from '@/lib/weight-inventory.queries';
 import { saveWeightInventoryItem } from '@/lib/weight-inventory.functions';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
@@ -27,7 +27,7 @@ export const Route = createFileRoute('/_authenticated/teste')({
     { name: 'twitter:card', content: 'summary' },
   ] }),
   loader: async ({ context }) => {
-    const [data] = await Promise.all([context.queryClient.ensureQueryData(weightCountingOptions), context.queryClient.ensureQueryData(weightInventoriesOptions)]);
+    const [data] = await Promise.all([context.queryClient.ensureQueryData(weightCountingOptions), context.queryClient.ensureQueryData(allWeightInventoriesOptions)]);
     return data;
   },
   component: Teste,
@@ -64,7 +64,7 @@ function Teste() {
   const filtered = useMemo(() => {
     const term = view === 'cadastro' || codeSearchOpen ? search.trim().toLocaleLowerCase() : '';
     return data.items.filter(i => {
-      const inInventory = !inventoryId || ['legado', 'livre'].includes(inventory.data?.inventory.origem_itens ?? '') || inventory.data?.items.some(row => row.item_id === i.id);
+      const inInventory = !inventoryId || inventory.data?.inventory.status === 'Finalizado' || ['legado', 'livre'].includes(inventory.data?.inventory.origem_itens ?? '') || inventory.data?.items.some(row => row.item_id === i.id);
       const eligible = view === 'cadastro' || (data.weights.some(w => w.item_id === i.id) && inInventory);
       return eligible && (i.id === itemId || `${i.produto} ${i.part_number} ${i.designacao}`.toLocaleLowerCase().includes(term));
     });
@@ -102,7 +102,7 @@ function Teste() {
   };
 
   const addCount = async (replace = false) => {
-    if (!item || !result || dirty || !inventoryId || inventory.data?.inventory.status !== 'Em andamento' || savingCount) return;
+    if (!item || !result || dirty || !inventoryId || !['Em andamento', 'Finalizado'].includes(inventory.data?.inventory.status ?? '') || savingCount) return;
     setSavingCount(true);
     try {
       const saved = await saveCount({ data: { inventoryId, itemId: item.id, grossG, replace } });
@@ -157,7 +157,7 @@ function Teste() {
           <div className="grid grid-cols-[minmax(0,1fr)_100px] gap-3"><label className="block space-y-1.5"><span className="text-sm font-medium">Peso indicado na balança</span><input className={inputClass} inputMode="decimal" value={scaleWeight} onChange={e => setScaleWeight(e.target.value)} placeholder="0,000" /></label><label className="block space-y-1.5"><span className="text-sm font-medium">Unidade</span><select className={inputClass} value={scaleUnit} onChange={e => setScaleUnit(e.target.value)}><option value="g">g</option><option value="kg">kg</option></select></label></div>
           {scaleWeight && !result && <p role="alert" className="text-sm text-destructive">Peso inválido ou menor que a tara do recipiente.</p>}
           <div aria-live="polite" aria-atomic="true" className="border-y border-border py-2 text-center"><p className="text-xs text-muted-foreground">Quantidade estimada</p><p className="text-4xl font-bold text-success tabular-nums py-1">{result && !dirty ? numberFormat.format(result.quantity) : '—'} <span className="text-sm font-medium">peças</span></p>{result && !dirty && <p className="text-xs text-muted-foreground">Peso líquido: {numberFormat.format(result.netG)} g</p>}</div>
-          <div className="grid grid-cols-[44px_minmax(0,1fr)] gap-2"><Button variant="outline" size="icon" className="h-11 w-11" disabled={savingCount} onClick={() => setScaleWeight('')} aria-label="Nova pesagem" title="Nova pesagem"><RotateCcw /></Button><Button className="h-11 min-w-0" disabled={!result || Boolean(dirty) || savingCount || inventory.data?.inventory.status !== 'Em andamento'} onClick={() => void addCount()}><Save />{savingCount ? 'Salvando…' : 'Adicionar à contagem'}</Button></div>
+          <div className="grid grid-cols-[44px_minmax(0,1fr)] gap-2"><Button variant="outline" size="icon" className="h-11 w-11" disabled={savingCount} onClick={() => setScaleWeight('')} aria-label="Nova pesagem" title="Nova pesagem"><RotateCcw /></Button><Button className="h-11 min-w-0" disabled={!result || Boolean(dirty) || savingCount || !['Em andamento', 'Finalizado'].includes(inventory.data?.inventory.status ?? '')} onClick={() => void addCount()}><Save />{savingCount ? 'Salvando…' : 'Adicionar à contagem'}</Button></div>
           <p className="text-[11px] leading-tight text-muted-foreground">Estimativa sujeita à variação das peças e precisão da balança. Use tara 0 g se a balança já estiver tarada.</p>
         </>}
       </section>
