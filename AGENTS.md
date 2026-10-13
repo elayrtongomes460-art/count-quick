@@ -26,3 +26,4 @@
 - Show scanner inventory progress in a separate read-only list using paginated inventory snapshots and counted state, not catalog stock; this preserves imported references and existing counting actions.
 - Use the shared natural-order comparator for imported inventory previews and progress lists; this orders numeric code and location segments without modifying snapshots or counts.
 - Correct historical quantities through an owner-authenticated server function with optimistic row-version checks; update counted state and divergences only, preserving inventory references, signatures and completion timestamps.
+- Include finalized inventories only in the scale's inventory selector; allow authenticated weight additions without reopening them, using zero references for new rows and preserving existing snapshots and duplicate-replacement confirmation.

@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { SignaturePad } from '@/components/SignaturePad';
-import { weightInventoriesOptions, weightInventoryOptions } from '@/lib/weight-inventory.queries';
+import { allWeightInventoriesOptions, weightInventoriesOptions, weightInventoryOptions } from '@/lib/weight-inventory.queries';
 import { finishWeightInventory } from '@/lib/weight-inventory.functions';
 import { gerarPdfInventario } from '@/lib/pdf-inventario';
 import { brl, num } from '@/lib/format';
@@ -16,7 +16,7 @@ import { InventorySetup } from '@/components/InventorySetup';
 const inputClass = 'w-full h-11 rounded-md border border-input bg-card px-3 text-base';
 
 export function WeightInventoryPanel({ inventoryId, onChange }: { inventoryId: string; onChange: (id: string) => void }) {
-  const { data } = useSuspenseQuery(weightInventoriesOptions);
+  const { data } = useSuspenseQuery(allWeightInventoriesOptions);
   const selected = useQuery(weightInventoryOptions(inventoryId));
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ export function WeightInventoryPanel({ inventoryId, onChange }: { inventoryId: s
       <label className="min-w-0 flex-1"><span className="sr-only">Inventário da pesagem</span><select className={`${inputClass} min-w-0`} value={inventoryId} onChange={event => onChange(event.target.value)}>
         <option value="">Selecionar inventário</option>
         {inventory && !data.inventories.some(i => i.id === inventory.id) && <option value={inventory.id}>{inventory.nome_inventario} · {inventory.status}</option>}
-        {data.inventories.map(i => <option key={i.id} value={i.id}>{i.nome_inventario}</option>)}
+        {data.inventories.map(i => <option key={i.id} value={i.id}>{i.nome_inventario} · {i.status}</option>)}
       </select></label>
       <Button variant={inventoryId ? 'outline' : 'default'} className="h-11 shrink-0 px-3" onClick={() => setDialog('start')} aria-label="Iniciar inventário" title="Iniciar inventário">{inventoryId ? <Plus /> : <><Play />Iniciar</>}</Button>
       {inventoryId && <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" disabled={!selected.data} onClick={() => setDialog('list')} aria-label="Listagem da contagem" title="Listagem da contagem"><ListChecks /></Button>}

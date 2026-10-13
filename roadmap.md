@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Permitir selecionar inventários finalizados na Balança e incluir pesagens, preservando finalização, referências e relatórios.
 - [x] Permitir corrigir quantidades contadas pelo Histórico, recalcular divergências e verificar persistência e relatórios.
 - [x] Reduzir carregamentos sequenciais e renderização de listas grandes; verificar busca completa, criação de inventário e navegação.
 - [x] Ordenar itens importados por código e oferecer ordem por localização na lista; verificar sem modificar referências.
