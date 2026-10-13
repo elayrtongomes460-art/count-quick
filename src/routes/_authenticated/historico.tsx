@@ -3,7 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, dateOnly } from "@/lib/format";
-import { ChevronRight, FileDown, Search } from "lucide-react";
+import { ChevronRight, FileDown, Search, Pencil } from "lucide-react";
+import { Button } from '@/components/ui/button';
 import { gerarPdfInventario } from "@/lib/pdf-inventario";
 import { toast } from "sonner";
 
@@ -92,6 +93,7 @@ function Historico() {
                   <ChevronRight className="size-5 text-muted-foreground" />
                 </div>
               </Link>
+              <div className="px-3.5 pb-3"><Button asChild variant="outline" className="w-full"><Link to="/inventario/$id" params={{ id: inv.id }}><Pencil className="size-4" />Editar quantidades</Link></Button></div>
               <button
                 onClick={(e) => baixarPdf(inv, e)}
                 disabled={downloading === inv.id}

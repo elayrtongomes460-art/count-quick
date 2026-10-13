@@ -3,8 +3,14 @@ import { AppShell } from "@/components/AppShell";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, dateBR, dateOnly, num } from "@/lib/format";
-import { Camera, Download, FileDown, Play, Scale } from "lucide-react";
+import { Camera, Download, FileDown, Play, Scale, Pencil } from "lucide-react";
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useServerFn } from '@tanstack/react-start';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { correctInventoryQuantity } from '@/lib/inventory-correction.functions';
+import { readAllPages } from '@/lib/paged-read';
 import { gerarPdfInventario } from "@/lib/pdf-inventario";
 import { serializeCsv } from "@/lib/csv";
 
@@ -18,6 +24,7 @@ type Inv = {
   observacao: string | null; status: string; finalized_at: string | null;
 };
 type InvItem = {
+  updated_at: string;
   contado: boolean; observacao: string;
   id: string; produto: string; part_number: string | null; designacao: string | null;
   quantidade_un_sistema: number; unidade_un: string | null; localizacao: string | null;
@@ -28,13 +35,36 @@ function Detalhes() {
   const { id } = Route.useParams();
   const [inv, setInv] = useState<Inv | null>(null);
   const [itens, setItens] = useState<InvItem[]>([]);
+  const [editing, setEditing] = useState<InvItem | null>(null);
+  const [quantity, setQuantity] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const correct = useServerFn(correctInventoryQuantity);
+  const queryClient = useQueryClient();
+  const openEdit = (item: InvItem) => { setEditing(item); setQuantity(String(item.quantidade_contada)); setEditError(''); };
+  const saveCorrection = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editing || saving) return;
+    const number = Number(quantity.trim().replace(',', '.'));
+    if (!quantity.trim() || !Number.isFinite(number) || number < 0) { setEditError('Informe uma quantidade válida, igual ou maior que zero.'); return; }
+    setSaving(true); setEditError('');
+    try {
+      const saved = await correct({ data: { inventoryId: id, rowId: editing.id, quantity: number, updatedAt: editing.updated_at } });
+      setItens(current => current.map(item => item.id === saved.id ? saved : item));
+      void queryClient.invalidateQueries({ queryKey: ['weight-inventory', id] });
+      setEditing(null); toast.success('Quantidade atualizada.');
+    } catch (error) { setEditError(error instanceof Error ? error.message : 'Não foi possível salvar.'); }
+    finally { setSaving(false); }
+  };
 
   useEffect(() => {
     (async () => {
       const { data: i } = await supabase.from("inventarios").select("*").eq("id", id).single();
       setInv(i as Inv);
-      const { data: it } = await supabase.from("inventario_itens").select("*").eq("inventario_id", id).order("produto");
-      setItens((it ?? []) as InvItem[]);
+      try {
+        const it = await readAllPages((from, to) => supabase.from("inventario_itens").select("*").eq("inventario_id", id).order("produto").order('id').range(from, to));
+        setItens(it);
+      } catch { toast.error('Não foi possível carregar os itens. Recarregue a página.'); }
     })();
   }, [id]);
 
@@ -122,7 +152,7 @@ function Detalhes() {
             const dif = Number(i.diferenca);
             return (
               <li key={i.id} className={`rounded-xl border p-3 ${dif === 0 ? "bg-card border-border" : "bg-destructive/5 border-destructive/30"}`}>
-                <div className="font-mono text-sm font-semibold text-primary">{i.produto}</div>
+                <div className="flex items-center justify-between gap-2"><div className="font-mono text-sm font-semibold text-primary">{i.produto}</div><Button variant="outline" size="icon" aria-label={`Editar quantidade de ${i.produto}`} title="Editar quantidade" onClick={() => openEdit(i)}><Pencil className="size-4" /></Button></div>
                 <div className="text-sm">{i.designacao}</div>
                 <div className="text-xs text-muted-foreground mt-1 flex gap-x-3 flex-wrap">
                   <span>Sist: {num(i.quantidade_un_sistema, 0)} {i.unidade_un}</span>
@@ -138,6 +168,17 @@ function Detalhes() {
           {itens.length === 0 && <li className="text-center text-muted-foreground py-8">Nenhum item contado.</li>}
         </ul>
       </div>
+      <Dialog open={Boolean(editing)} onOpenChange={open => { if (!open && !saving) setEditing(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar quantidade contada</DialogTitle><DialogDescription>{editing?.produto} — {editing?.designacao}</DialogDescription></DialogHeader>
+          <form onSubmit={saveCorrection} className="space-y-4">
+            <p className="text-sm text-muted-foreground">Qtd sistema: {num(editing?.quantidade_un_sistema)} {editing?.unidade_un}</p>
+            <label className="block space-y-2"><span className="text-sm font-medium">Quantidade contada</span><input autoFocus inputMode="decimal" value={quantity} onChange={event => setQuantity(event.target.value)} disabled={saving} className="w-full rounded-md border border-input bg-background px-3 py-3 text-base" /></label>
+            {editError && <p role="alert" className="text-sm text-destructive">{editError}</p>}
+            <div className="flex justify-end gap-2"><Button type="button" variant="outline" disabled={saving} onClick={() => setEditing(null)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? 'Salvando…' : 'Salvar quantidade'}</Button></div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
