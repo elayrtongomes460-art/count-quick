@@ -1,4 +1,5 @@
 # Tasks
+- [x] Reativar Contagem por Câmera IA no início e ocultar a Balança da navegação.
 - [ ] Ocultar referências no Cadastro de Itens e em contagens manuais; mostrar dados exclusivos do Excel na nova contagem e na Balança, com atalho de importação e seleção limitada ao arquivo.
 - [x] Permitir selecionar inventários finalizados na Balança e incluir pesagens, preservando finalização, referências e relatórios.
 - [x] Permitir corrigir quantidades contadas pelo Histórico, recalcular divergências e verificar persistência e relatórios.

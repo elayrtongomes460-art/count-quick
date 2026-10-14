@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, dateBR, dateOnly, num } from "@/lib/format";
-import { Camera, Download, FileDown, Play, Scale, Pencil } from "lucide-react";
+import { Camera, Download, FileDown, Play, Pencil } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useServerFn } from '@tanstack/react-start';
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/inventario/$id")({
 });
 
 type Inv = {
-  id: string; nome_inventario: string; data: string; responsavel: string;
+  id: string; nome_inventario: string; data: string; responsavel: string; origem_itens: string;
   observacao: string | null; status: string; finalized_at: string | null;
 };
 type InvItem = {
@@ -105,6 +105,8 @@ function Detalhes() {
 
   if (!inv) return <AppShell title="Inventário"><p className="text-muted-foreground">Carregando…</p></AppShell>;
 
+  const showRef = ['excel', 'legado'].includes(inv.origem_itens);
+
   return (
     <AppShell
       title={inv.nome_inventario}
@@ -126,12 +128,14 @@ function Detalhes() {
 
         <div className="grid grid-cols-2 gap-2">
           <Stat label="Itens contados" value={String(resumo.totalItens)} />
-          <Stat label="Com divergência" value={String(resumo.comDif)} tone={resumo.comDif > 0 ? "danger" : "ok"} />
-          <Stat label="Sobra (+)" value={num(resumo.sobra, 0)} />
-          <Stat label="Falta (−)" value={num(resumo.falta, 0)} tone={resumo.falta < 0 ? "danger" : "ok"} />
-          <div className="col-span-2">
-            <Stat label="Valor total da divergência" value={brl(resumo.totalDiv)} tone={resumo.totalDiv !== 0 ? "danger" : "ok"} big />
-          </div>
+          {showRef && <>
+            <Stat label="Com divergência" value={String(resumo.comDif)} tone={resumo.comDif > 0 ? "danger" : "ok"} />
+            <Stat label="Sobra (+)" value={num(resumo.sobra, 0)} />
+            <Stat label="Falta (−)" value={num(resumo.falta, 0)} tone={resumo.falta < 0 ? "danger" : "ok"} />
+            <div className="col-span-2">
+              <Stat label="Valor total da divergência" value={brl(resumo.totalDiv)} tone={resumo.totalDiv !== 0 ? "danger" : "ok"} big />
+            </div>
+          </>}
         </div>
 
         {inv.status === "Em andamento" && (
@@ -139,7 +143,6 @@ function Detalhes() {
             <Link to="/contagem/$id" params={{ id: inv.id }} className="w-full bg-accent text-accent-foreground rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2">
               <Play className="size-5" /> Continuar contagem
             </Link>
-            <Button asChild className="w-full h-12"><Link to="/teste" search={{ inventario: inv.id }}><Scale />Continuar pela Balança</Link></Button>
             <Link to="/contagem-camera" search={{ inventario: inv.id }} className="w-full bg-primary text-primary-foreground rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2">
               <Camera className="size-5" /> Adicionar contagem por câmera
             </Link>
@@ -151,15 +154,15 @@ function Detalhes() {
           {itens.map(i => {
             const dif = Number(i.diferenca);
             return (
-              <li key={i.id} className={`rounded-xl border p-3 ${dif === 0 ? "bg-card border-border" : "bg-destructive/5 border-destructive/30"}`}>
+              <li key={i.id} className={`rounded-xl border p-3 ${dif === 0 || !showRef ? "bg-card border-border" : "bg-destructive/5 border-destructive/30"}`}>
                 <div className="flex items-center justify-between gap-2"><div className="font-mono text-sm font-semibold text-primary">{i.produto}</div><Button variant="outline" size="icon" aria-label={`Editar quantidade de ${i.produto}`} title="Editar quantidade" onClick={() => openEdit(i)}><Pencil className="size-4" /></Button></div>
                 <div className="text-sm">{i.designacao}</div>
                 <div className="text-xs text-muted-foreground mt-1 flex gap-x-3 flex-wrap">
-                  <span>Sist: {num(i.quantidade_un_sistema, 0)} {i.unidade_un}</span>
+                  {showRef && <span>Sist: {num(i.quantidade_un_sistema, 0)} {i.unidade_un}</span>}
                   <span>{i.contado ? `Cont: ${num(i.quantidade_contada, 0)}` : 'Pendente'}</span>
-                  <span className={dif === 0 ? "" : "font-semibold text-destructive"}>Dif: {dif > 0 ? "+" : ""}{num(dif, 0)}</span>
-                  <span>{i.localizacao}</span>
-                  <span>{brl(i.valor_divergencia)}</span>
+                  {showRef && <span className={dif === 0 ? "" : "font-semibold text-destructive"}>Dif: {dif > 0 ? "+" : ""}{num(dif, 0)}</span>}
+                  {showRef && <span>{i.localizacao}</span>}
+                  {showRef && <span>{brl(i.valor_divergencia)}</span>}
                   {i.observacao && <span>{i.observacao}</span>}
                 </div>
               </li>
