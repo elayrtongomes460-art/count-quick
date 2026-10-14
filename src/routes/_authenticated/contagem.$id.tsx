@@ -285,6 +285,7 @@ function Contagem() {
   };
 
   const finalizado = inv?.status === "Finalizado";
+  const showRef = inv ? ['excel', 'legado'].includes(inv.origem_itens) : false;
   const diferenca = item && qtdContada !== "" ? (Number(qtdContada.replace(",", ".")) - Number(item.quantidade_un)) : 0;
 
   return (
@@ -347,11 +348,13 @@ function Contagem() {
             <div className="bg-card border border-border rounded-xl p-3 space-y-2">
               <Row k="Part Number" v={item.part_number || "—"} />
               <Row k="Designação" v={item.designacao} />
-              <div className="grid grid-cols-3 gap-2">
-                <Mini k="Qtd sistema" v={`${num(item.quantidade_un, 0)} ${item.unidade_un}`} />
-                <Mini k="Localização" v={item.localizacao || "—"} />
-                <Mini k="Preço médio ponderado" v={brl(item.preco_medio_pond)} />
-              </div>
+              {showRef && (
+                <div className="grid grid-cols-3 gap-2">
+                  <Mini k="Qtd sistema" v={`${num(item.quantidade_un, 0)} ${item.unidade_un}`} />
+                  <Mini k="Localização" v={item.localizacao || "—"} />
+                  <Mini k="Preço médio ponderado" v={brl(item.preco_medio_pond)} />
+                </div>
+              )}
             </div>
 
             <div className="bg-card border-2 border-accent rounded-xl p-3">
@@ -367,7 +370,7 @@ function Contagem() {
                 className="w-full mt-1 bg-transparent text-3xl font-bold py-2 outline-none"
                 placeholder="0"
               />
-              {qtdContada !== "" && (
+              {showRef && qtdContada !== "" && (
                 <div className={`mt-1 text-sm font-semibold ${diferenca === 0 ? "text-success" : diferenca > 0 ? "text-warning-foreground" : "text-destructive"}`}>
                   Diferença: {diferenca > 0 ? "+" : ""}{num(diferenca, 0)} · {brl(diferenca * Number(item.preco_medio_pond))}
                 </div>
@@ -401,10 +404,11 @@ function Contagem() {
           onClose={() => setShowList(false)}
           onChange={loadContados}
           finalizado={finalizado}
+          showRef={showRef}
         />
       )}
 
-      {showInventoryList && <InventoryProgressList items={contados} loading={listLoading} error={listError} name={inv?.nome_inventario ?? "Inventário"} onClose={() => { setShowInventoryList(false); produtoRef.current?.focus(); }} />}
+      {showInventoryList && <InventoryProgressList items={contados} loading={listLoading} error={listError} name={inv?.nome_inventario ?? "Inventário"} showReferences={showRef} onClose={() => { setShowInventoryList(false); produtoRef.current?.focus(); }} />}
 
       <SignaturePad
         open={showSig}
@@ -434,8 +438,8 @@ function Mini({ k, v }: { k: string; v: string }) {
 }
 
 function ContadosList({
-  inventarioId, itens, onClose, onChange, finalizado,
-}: { inventarioId: string; itens: InvItem[]; onClose: () => void; onChange: () => void; finalizado: boolean }) {
+  inventarioId, itens, onClose, onChange, finalizado, showRef,
+}: { inventarioId: string; itens: InvItem[]; onClose: () => void; onChange: () => void; finalizado: boolean; showRef: boolean }) {
   const [q, setQ] = useState("");
   const f = itens.filter(i =>
     i.produto.toLowerCase().includes(q.toLowerCase()) ||
@@ -476,16 +480,16 @@ function ContadosList({
           {f.map(i => {
             const dif = Number(i.diferenca);
             return (
-              <li key={i.id} className={`rounded-xl border p-3 ${dif === 0 ? "bg-card border-border" : "bg-destructive/5 border-destructive/30"}`}>
+              <li key={i.id} className={`rounded-xl border p-3 ${dif === 0 || !showRef ? "bg-card border-border" : "bg-destructive/5 border-destructive/30"}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="font-mono text-sm font-semibold text-primary">{i.produto}</div>
                     <div className="text-sm truncate">{i.designacao}</div>
                     <div className="text-xs text-muted-foreground mt-0.5 flex gap-x-3 flex-wrap">
-                      <span>Sist: {num(i.quantidade_un_sistema, 0)}</span>
+                      {showRef && <span>Sist: {num(i.quantidade_un_sistema, 0)}</span>}
                       <span>{i.contado ? `Cont: ${num(i.quantidade_contada, 0)}` : 'Pendente'}</span>
-                      <span className={dif === 0 ? "" : "font-semibold text-destructive"}>Dif: {dif > 0 ? "+" : ""}{num(dif, 0)}</span>
-                      <span>{brl(i.valor_divergencia)}</span>
+                      {showRef && <span className={dif === 0 ? "" : "font-semibold text-destructive"}>Dif: {dif > 0 ? "+" : ""}{num(dif, 0)}</span>}
+                      {showRef && <span>{brl(i.valor_divergencia)}</span>}
                     </div>
                   </div>
                   {!finalizado && (
