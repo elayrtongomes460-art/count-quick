@@ -15,8 +15,8 @@ type InventoryRow = ProgressItem & {
 const quantity = (value: number) => Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 6 });
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
-export function InventoryProgressList({ items, loading, error, onClose, name }: {
-  items: InventoryRow[]; loading: boolean; error: string | null; onClose: () => void; name: string;
+export function InventoryProgressList({ items, loading, error, onClose, name, showReferences = true }: {
+  items: InventoryRow[]; loading: boolean; error: string | null; onClose: () => void; name: string; showReferences?: boolean;
 }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -71,13 +71,13 @@ export function InventoryProgressList({ items, loading, error, onClose, name }: 
                 </div>
                 <span className={`shrink-0 text-xs font-semibold ${row.contado ? 'text-success' : 'text-destructive'}`}>{row.contado ? 'Contado' : 'Pendente'}</span>
               </div>
-              <dl className="grid grid-cols-3 gap-x-2 gap-y-3 text-sm">
-                <Detail label="Qtd. arquivo / sistema" value={`${quantity(row.quantidade_un_sistema)} ${row.unidade_un || 'UN'}`} />
+              <dl className={`grid gap-x-2 gap-y-3 text-sm ${showReferences ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                {showReferences && <Detail label="Qtd. arquivo / sistema" value={`${quantity(row.quantidade_un_sistema)} ${row.unidade_un || 'UN'}`} />}
                 <Detail label="Qtd. contada" value={row.contado ? `${quantity(row.quantidade_contada)} ${row.unidade_un || 'UN'}` : '—'} />
-                <Detail label="Qtd. faltante" value={`${quantity(remainingQuantity(row))} ${row.unidade_un || 'UN'}`} />
-                <Detail label="Localização" value={row.localizacao || '—'} />
-                <Detail label="Preço médio ponderado" value={brl(row.preco_medio_pond)} />
-                <Detail label="Diferença" value={row.contado ? quantity(Number(row.quantidade_contada) - Number(row.quantidade_un_sistema)) : '—'} />
+                {showReferences && <Detail label="Qtd. faltante" value={`${quantity(remainingQuantity(row))} ${row.unidade_un || 'UN'}`} />}
+                {showReferences && <Detail label="Localização" value={row.localizacao || '—'} />}
+                {showReferences && <Detail label="Preço médio ponderado" value={brl(row.preco_medio_pond)} />}
+                {showReferences && <Detail label="Diferença" value={row.contado ? quantity(Number(row.quantidade_contada) - Number(row.quantidade_un_sistema)) : '—'} />}
               </dl>
               {row.observacao && <p className="text-xs text-muted-foreground break-words">Observação: {row.observacao}</p>}
             </article>
