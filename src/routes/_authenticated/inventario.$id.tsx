@@ -139,7 +139,6 @@ function Detalhes() {
             <Link to="/contagem/$id" params={{ id: inv.id }} className="w-full bg-accent text-accent-foreground rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2">
               <Play className="size-5" /> Continuar contagem
             </Link>
-            <Button asChild className="w-full h-12"><Link to="/teste" search={{ inventario: inv.id }}><Scale />Continuar pela Balança</Link></Button>
             <Link to="/contagem-camera" search={{ inventario: inv.id }} className="w-full bg-primary text-primary-foreground rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2">
               <Camera className="size-5" /> Adicionar contagem por câmera
             </Link>
