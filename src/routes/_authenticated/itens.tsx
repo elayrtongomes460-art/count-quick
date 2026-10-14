@@ -3,7 +3,6 @@ import { AppShell } from "@/components/AppShell";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import { brl, num } from "@/lib/format";
 import { Pencil, Plus, Search, Trash2, X, Download, Upload, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import { parseItensFile } from "@/lib/import-itens";
@@ -213,10 +212,6 @@ function ItensPage() {
                     <span>{i.unidade_un}</span>
                     {i.especificacoes && <span>{i.especificacoes}</span>}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                    <span className="break-all">Localização: {i.localizacao || "—"}</span>
-                    <span>Preço médio ponderado: {brl(i.preco_medio_pond)}</span>
-                  </div>
                 </div>
                 <button onClick={() => { setEditing(i); setShowForm(true); }} className="p-2 rounded-md bg-secondary"><Pencil className="size-4" /></button>
                 <button onClick={() => remover(i)} className="p-2 rounded-md bg-destructive/10 text-destructive"><Trash2 className="size-4" /></button>
@@ -252,7 +247,6 @@ function ItemForm({ initial, onClose, onSaved }: { initial: Item; onClose: () =>
     e.preventDefault();
     if (!f.produto.trim()) return toast.error("Produto é obrigatório.");
     if (!f.designacao.trim()) return toast.error("Designação é obrigatória.");
-    if (!Number.isFinite(f.preco_medio_pond) || f.preco_medio_pond < 0) return toast.error("Informe um preço médio ponderado válido, igual ou maior que zero.");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     const payload = {
@@ -291,8 +285,6 @@ function ItemForm({ initial, onClose, onSaved }: { initial: Item; onClose: () =>
           <FF label="Designação" required><input className="ipt" value={f.designacao} onChange={e => set("designacao", e.target.value)} /></FF>
           <FF label="Especificações"><textarea className="ipt" value={f.especificacoes ?? ""} onChange={e => set("especificacoes", e.target.value)} /></FF>
           <FF label="Unidade UN"><input className="ipt" value={f.unidade_un} onChange={e => set("unidade_un", e.target.value)} /></FF>
-          <FF label="Localização"><input className="ipt" value={f.localizacao} onChange={e => set("localizacao", e.target.value)} /></FF>
-          <FF label="Preço médio ponderado (R$)"><input className="ipt" type="number" min="0" step="any" inputMode="decimal" value={f.preco_medio_pond} onChange={e => set("preco_medio_pond", Number(e.target.value))} /></FF>
 
           <button type="submit" disabled={saving} className="w-full bg-primary text-primary-foreground py-3.5 rounded-lg font-semibold mt-2 disabled:opacity-60">
             {saving ? "Salvando…" : "Salvar"}
