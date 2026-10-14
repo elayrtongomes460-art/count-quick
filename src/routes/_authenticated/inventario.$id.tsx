@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, dateBR, dateOnly, num } from "@/lib/format";
-import { Camera, Download, FileDown, Play, Scale, Pencil } from "lucide-react";
+import { Camera, Download, FileDown, Play, Pencil } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useServerFn } from '@tanstack/react-start';
