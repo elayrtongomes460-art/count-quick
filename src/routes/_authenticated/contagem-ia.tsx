@@ -47,6 +47,7 @@ function ContagemIA() {
   const [partNumber, setPartNumber] = useState("");
   const [observacao, setObservacao] = useState("");
   const [qtdEsperada, setQtdEsperada] = useState<number | null>(null);
+  const [codeFound, setCodeFound] = useState<boolean | null>(null);
   const [invNome, setInvNome] = useState<string | null>(null);
 
   // --- pipeline state ---
@@ -62,6 +63,8 @@ function ContagemIA() {
   const [showOriginal, setShowOriginal] = useState(false);
 
   const profile = PIECE_PROFILES[pieceType];
+  const code = produto.trim();
+  const codeOk = code.length > 0;
 
   useEffect(() => {
     if (!inventario) return;
@@ -71,13 +74,14 @@ function ContagemIA() {
 
   useEffect(() => {
     const p = produto.trim();
-    if (!p) { setQtdEsperada(null); return; }
+    if (!p) { setQtdEsperada(null); setCodeFound(null); return; }
     supabase.from("itens").select("part_number, quantidade_un").eq("produto", p).maybeSingle()
       .then(({ data }) => {
         if (data) {
+          setCodeFound(true);
           setQtdEsperada(Number(data.quantidade_un) || 0);
           if (data.part_number) setPartNumber(data.part_number);
-        } else setQtdEsperada(null);
+        } else { setQtdEsperada(null); setCodeFound(false); }
       });
   }, [produto]);
 
@@ -175,6 +179,7 @@ function ContagemIA() {
   }, [pieceType]);
 
   const capture = async () => {
+    if (!codeOk) { toast.error("Informe o código do produto para iniciar a contagem."); return; }
     const v = videoRef.current;
     if (!v || !v.videoWidth) { toast.error("Câmera não pronta"); return; }
     // Grab bitmap BEFORE stopping stream (stopping blanks the video element)
@@ -190,6 +195,7 @@ function ContagemIA() {
 
   const onGallery = async (file: File | null) => {
     if (!file) return;
+    if (!codeOk) { toast.error("Informe o código do produto para iniciar a contagem."); return; }
     if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem"); return; }
     stopCamera();
     await runPipeline(file);
@@ -229,6 +235,7 @@ function ContagemIA() {
   // ---- save ----
   const save = async () => {
     if (!preproc) return;
+    if (!codeOk) { toast.error("O código do produto é obrigatório para salvar a contagem."); return; }
     setPhase("saving");
     try {
       const { data: userRes } = await supabase.auth.getUser();
@@ -250,7 +257,7 @@ function ContagemIA() {
       const { error } = await supabase.from("contagens_camera").insert({
         user_id: uid,
         inventario_id: inventario ?? null,
-        produto: produto || null,
+        produto: code,
         part_number: partNumber || null,
         observacao: observacao || null,
         imagem_url,
@@ -372,10 +379,13 @@ function ContagemIA() {
           )}
 
           <div className="grid gap-2">
-            <Field label="Produto" v={produto} onChange={setProduto} />
+            <Field label="Produto (código)" v={produto} onChange={setProduto} required invalid={!codeOk} />
             <Field label="Part Number" v={partNumber} onChange={setPartNumber} />
             <Field label="Observação" v={observacao} onChange={setObservacao} textarea />
           </div>
+          {!codeOk && (
+            <p className="text-[11px] text-destructive">O código do produto é obrigatório para salvar a contagem.</p>
+          )}
 
           {detalhes && <p className="text-xs italic text-muted-foreground">{detalhes}</p>}
 
@@ -448,27 +458,38 @@ function ContagemIA() {
       {/* Bottom controls */}
       <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/95 to-transparent pt-8 pb-6 px-6">
         <div className="mb-3">
+          <label className="block text-[11px] uppercase tracking-wide text-white/70 mb-1">
+            Código do produto <span className="text-amber-300">*</span>
+          </label>
           <input
             value={produto}
             onChange={(e) => setProduto(e.target.value)}
-            placeholder="Código do produto (opcional)"
-            className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-sm outline-none focus:border-accent placeholder:text-white/50"
+            placeholder="Obrigatório — ex.: OI-00150"
+            className={`w-full px-3 py-2 rounded-lg bg-white/10 border text-sm outline-none focus:border-accent placeholder:text-white/50 ${
+              codeOk ? "border-white/20" : "border-amber-300/70"
+            }`}
           />
-          {qtdEsperada !== null && (
+          {!codeOk ? (
+            <p className="text-[11px] mt-1 text-amber-300">Informe o código do produto para iniciar a contagem.</p>
+          ) : codeFound === false ? (
+            <p className="text-[11px] mt-1 text-amber-300">Código não encontrado no cadastro — confira antes de contar.</p>
+          ) : qtdEsperada !== null ? (
             <div className="text-xs mt-1 opacity-80 flex items-center gap-1">
               <CheckCircle2 className="size-3 text-accent" /> Estoque atual: <span className="font-semibold">{qtdEsperada}</span>
             </div>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center justify-around">
-          <button onClick={() => galRef.current?.click()} className="flex flex-col items-center gap-1">
+          <button onClick={() => galRef.current?.click()} disabled={!codeOk}
+            className="flex flex-col items-center gap-1 disabled:opacity-40">
             <div className="bg-white/15 rounded-full p-3"><ImageIcon className="size-5" /></div>
             <span className="text-[10px] opacity-80">Galeria</span>
           </button>
 
           <button
             onClick={capture}
-            className="bg-accent text-accent-foreground rounded-full size-20 flex flex-col items-center justify-center shadow-2xl ring-4 ring-white/20 active:scale-95 transition-transform"
+            disabled={!codeOk}
+            className="bg-accent text-accent-foreground rounded-full size-20 flex flex-col items-center justify-center shadow-2xl ring-4 ring-white/20 active:scale-95 transition-transform disabled:opacity-40 disabled:shadow-none"
           >
             <Scan className="size-8" />
             <span className="text-[9px] font-bold uppercase">Contar</span>
@@ -502,16 +523,23 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "pr
   );
 }
 
-function Field({ label, v, onChange, textarea }: { label: string; v: string; onChange: (s: string) => void; textarea?: boolean }) {
+function Field({ label, v, onChange, textarea, required, invalid }: {
+  label: string; v: string; onChange: (s: string) => void;
+  textarea?: boolean; required?: boolean; invalid?: boolean;
+}) {
+  const box = `mt-1 w-full px-3 py-2 rounded-lg bg-background border outline-none focus:border-ring text-foreground ${
+    invalid && required ? "border-destructive" : "border-border"
+  }`;
   return (
     <label className="block">
-      <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="text-xs uppercase tracking-wide text-muted-foreground">
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+      </span>
       {textarea ? (
-        <textarea value={v} onChange={(e) => onChange(e.target.value)} rows={2}
-          className="mt-1 w-full px-3 py-2 rounded-lg bg-background border border-border outline-none focus:border-ring text-foreground" />
+        <textarea value={v} onChange={(e) => onChange(e.target.value)} rows={2} className={box} />
       ) : (
-        <input value={v} onChange={(e) => onChange(e.target.value)}
-          className="mt-1 w-full px-3 py-2 rounded-lg bg-background border border-border outline-none focus:border-ring text-foreground" />
+        <input value={v} onChange={(e) => onChange(e.target.value)} className={box} />
       )}
     </label>
   );
