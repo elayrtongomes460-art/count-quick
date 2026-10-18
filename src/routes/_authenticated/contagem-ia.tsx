@@ -15,6 +15,7 @@ import {
   PIECE_LIST, PIECE_PROFILES, newMarkerId,
   type Marker, type PieceType, type ProgressEvent,
 } from "@/lib/ai/types";
+import { ProductCodePicker } from "@/components/ProductCodePicker";
 
 type Search = { inventario?: string; produto?: string };
 
@@ -379,7 +380,15 @@ function ContagemIA() {
           )}
 
           <div className="grid gap-2">
-            <Field label="Produto (código)" v={produto} onChange={setProduto} required invalid={!codeOk} />
+            <ProductCodePicker
+              id="ia-produto-revisao"
+              label="Produto (código)"
+              required
+              invalid={!codeOk}
+              value={produto}
+              onChange={setProduto}
+              placeholder="Pesquise ou selecione o código"
+            />
             <Field label="Part Number" v={partNumber} onChange={setPartNumber} />
             <Field label="Observação" v={observacao} onChange={setObservacao} textarea />
           </div>
@@ -458,16 +467,15 @@ function ContagemIA() {
       {/* Bottom controls */}
       <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/95 to-transparent pt-8 pb-6 px-6">
         <div className="mb-3">
-          <label className="block text-[11px] uppercase tracking-wide text-white/70 mb-1">
-            Código do produto <span className="text-amber-300">*</span>
-          </label>
-          <input
+          <ProductCodePicker
+            dark
+            id="ia-produto"
+            label="Código do produto"
+            required
+            invalid={!codeOk}
             value={produto}
-            onChange={(e) => setProduto(e.target.value)}
-            placeholder="Obrigatório — ex.: OI-00150"
-            className={`w-full px-3 py-2 rounded-lg bg-white/10 border text-sm outline-none focus:border-accent placeholder:text-white/50 ${
-              codeOk ? "border-white/20" : "border-amber-300/70"
-            }`}
+            onChange={setProduto}
+            placeholder="Pesquise ou selecione — ex.: OI-00150"
           />
           {!codeOk ? (
             <p className="text-[11px] mt-1 text-amber-300">Informe o código do produto para iniciar a contagem.</p>
