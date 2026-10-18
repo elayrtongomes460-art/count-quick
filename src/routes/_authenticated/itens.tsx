@@ -90,8 +90,8 @@ function ItensPage() {
   };
 
   const exportCsv = () => {
-    const header = ["Produto","Part_Number","Designacao","Especificacoes","Unidade_UN","Localizacao","Preco_Medio_Pond"];
-    const rows = itens.map(i => [i.produto, i.part_number ?? "", i.designacao, i.especificacoes, i.unidade_un, i.localizacao, i.preco_medio_pond]);
+    const header = ["Produto","Part_Number","Designacao","Especificacoes","Unidade_UN"];
+    const rows = itens.map(i => [i.produto, i.part_number ?? "", i.designacao, i.especificacoes, i.unidade_un]);
     const csv = serializeCsv([header, ...rows]);
     const blob = new Blob(["\ufeff"+csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
@@ -193,7 +193,7 @@ function ItensPage() {
         </button>
 
         <div className="text-[11px] text-muted-foreground px-1 -mt-1">
-          Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, unidade_un, localizacao, preco_medio_pond. Quantidade é importada ao iniciar um inventário.
+          Aceita CSV, TXT, XLSX, DOCX e PDF. Colunas: produto, part_number, designacao, especificacoes, unidade_un. Quantidade, valor e localização vêm do Excel ao iniciar uma contagem.
         </div>
 
         <div className="text-xs text-muted-foreground px-1">
