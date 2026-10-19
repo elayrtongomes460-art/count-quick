@@ -1,4 +1,5 @@
 # Tasks
+- [x] Permitir pesquisar ou selecionar o código na Contagem por IA, exibindo a descrição do produto; verificar na tela.
 - [x] Tornar o código do produto obrigatório na Contagem por IA, bloqueando contagem e salvamento sem código; verificar na tela.
 - [x] Reativar Contagem por Câmera IA no início e ocultar a Balança da navegação.
 - [x] Ocultar referências no Cadastro de Itens e em contagens manuais; mostrar dados exclusivos do Excel na nova contagem e na Balança, com atalho de importação e seleção limitada ao arquivo.
